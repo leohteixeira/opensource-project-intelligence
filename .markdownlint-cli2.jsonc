@@ -1,0 +1,13 @@
+{
+  "config": {
+    "default": true,
+    // Product documentation in this portfolio uses 100-column soft wrapping.
+    "MD013": { "line_length": 100, "code_blocks": false, "tables": false },
+    // Duplicate headings are legitimate inside ADR sections.
+    "MD024": { "siblings_only": true },
+    "MD033": false,
+    "MD041": false,
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["**/node_modules/**", "**/dist/**", "**/bin/**", "**/obj/**", "**/coverage/**"],
+}

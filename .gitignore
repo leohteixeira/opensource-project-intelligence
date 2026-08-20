@@ -1,0 +1,20 @@
+# Node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.vite/
+
+# Go
+/bin/
+*.test
+*.out
+
+# Environment: only the checked-in example file is tracked
+.env
+.env.*
+!env.example
+
+# Tooling
+.DS_Store
+*.log
