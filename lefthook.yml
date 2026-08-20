@@ -1,0 +1,75 @@
+# Git hooks for opensource-project-intelligence.
+#
+# gitleaks, hadolint, prettier and markdownlint-cli2 are pinned in the Dev
+# Container image, so the hooks call them directly. `pnpm exec` is used where a
+# repository-local pin exists, keeping hooks and CI on the same version.
+min_version: 2.1.6
+assert_lefthook_installed: true
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: secrets
+      run: gitleaks git --pre-commit --staged --redact --no-banner
+
+    - name: prettier
+      glob: '*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,html,yml,yaml}'
+      run: pnpm exec prettier --write {staged_files}
+      stage_fixed: true
+
+    # Prettier formats Markdown (including table padding) and markdownlint lints
+    # it. They run sequentially inside a group so they never write to the same
+    # file concurrently.
+    - name: markdown
+      group:
+        parallel: false
+        jobs:
+          - name: prettier
+            glob: '*.md'
+            run: pnpm exec prettier --write {staged_files}
+            stage_fixed: true
+          - name: markdownlint
+            glob: '*.md'
+            run: pnpm exec markdownlint-cli2 --fix {staged_files}
+            stage_fixed: true
+
+    - name: dockerfile
+      glob: '*.Dockerfile'
+      run: hadolint {staged_files}
+
+    - name: shell
+      glob: '*.sh'
+      run: bash -n {staged_files}
+
+    - name: gofmt
+      glob: '*.go'
+      run: gofmt -w {staged_files}
+      stage_fixed: true
+
+    - name: govet
+      glob: '*.go'
+      run: go vet ./...
+
+    - name: eslint
+      glob: 'apps/web/**/*.{ts,tsx}'
+      root: apps/web/
+      run: pnpm exec eslint --fix --max-warnings 0 {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  jobs:
+    - name: conventional-commit
+      run: .lefthook/commit-msg/conventional-commit.sh {1}
+
+pre-push:
+  parallel: false
+  jobs:
+    - name: secrets-history
+      run: gitleaks git --redact --no-banner
+
+    # `make check` runs gofmt, go vet, the race detector and the build.
+    - name: go
+      run: make check
+
+    - name: web
+      run: pnpm -r typecheck && pnpm -r lint && pnpm -r test && pnpm -r build
