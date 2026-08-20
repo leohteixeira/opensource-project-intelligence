@@ -1,37 +1,38 @@
-# ADR 0002 — Router HTTP e organização dos binários
+# ADR 0002 — HTTP router and binary layout
 
-- **Status:** aceito
-- **Data:** 2026-08-20
+- **Status:** accepted
+- **Date:** 2026-08-20
 
-## Contexto
+## Context
 
-A especificação de produto diz que a API usará HTTP e JSON e exige explicitamente que a decisão
-sobre o router HTTP seja registrada em um ADR. Também determina que se use a standard library
-sempre que ela resolva o problema de forma adequada e que frameworks não determinem a organização
-do domínio.
+The product specification says the API will use HTTP and JSON and explicitly requires the decision
+about the HTTP router to be recorded in an ADR. It also mandates using the standard library
+whenever it solves the problem adequately, and that frameworks must not dictate how the domain is
+organized.
 
-## Decisão
+## Decision
 
-- A API usa **`net/http` e `http.ServeMux` da standard library**. Sem chi, gin ou echo.
-- Desde o Go 1.22 o `ServeMux` roteia por método e por wildcard de path (`GET /api/v1/projects/{id}`),
-  que é o que o produto precisa.
-- Servidor construído em `internal/platform/httpx` com timeouts explícitos
-  (`ReadHeaderTimeout`, `ReadTimeout`, `WriteTimeout`, `IdleTimeout`), porque o zero value de
-  `http.Server` não tem timeout algum.
-- **Dois binários**, `cmd/api` e `cmd/worker`, compartilhando os mesmos packages de `internal/`.
-- Ambos fazem graceful shutdown em `SIGINT`/`SIGTERM`, com prazo controlado por `SHUTDOWN_TIMEOUT`.
-- Configuração por variáveis de ambiente, lida uma vez na inicialização e passada por construtor.
-  Sem estado global mutável.
-- Packages organizados por capacidade de negócio, com interfaces pequenas declaradas pelo package
-  consumidor. Não existe package `utils`.
+- The API uses the **standard library `net/http` and `http.ServeMux`**. No chi, gin or echo.
+- Since Go 1.22 `ServeMux` routes by method and by path wildcard (`GET /api/v1/projects/{id}`),
+  which is what the product needs.
+- The server is built in `internal/platform/httpx` with explicit timeouts (`ReadHeaderTimeout`,
+  `ReadTimeout`, `WriteTimeout`, `IdleTimeout`), because the zero value of `http.Server` has no
+  timeout at all.
+- **Two binaries**, `cmd/api` and `cmd/worker`, sharing the same packages from `internal/`.
+- Both shut down gracefully on `SIGINT`/`SIGTERM`, with a deadline controlled by
+  `SHUTDOWN_TIMEOUT`.
+- Configuration through environment variables, read once at startup and passed through
+  constructors. No mutable global state.
+- Packages organized by business capability, with small interfaces declared by the consuming
+  package. There is no `utils` package.
 
-## Consequências
+## Consequences
 
-Middleware (autenticação, rate limit, request id) será escrito à mão em vez de vir pronto de um
-ecossistema de router. Em troca, não há dependência de framework no caminho da requisição e o
-roteamento é o mesmo que a documentação da standard library descreve.
+Middleware (authentication, rate limiting, request id) will be written by hand instead of coming
+ready-made from a router ecosystem. In exchange, there is no framework dependency on the request
+path and routing behaves exactly as the standard library documentation describes.
 
-## Gatilho de reavaliação
+## Reassessment trigger
 
-Adotar um router de terceiros se surgir necessidade de recurso que o `ServeMux` não cobre —
-por exemplo grupos de rota com middleware aninhado em três ou mais níveis.
+Adopt a third-party router if a need arises for a feature `ServeMux` does not cover — for example
+route groups with middleware nested three or more levels deep.

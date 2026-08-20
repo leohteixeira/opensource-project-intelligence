@@ -1,31 +1,29 @@
-# ADR 0001 — Registrar decisões de arquitetura
+# ADR 0001 — Record architecture decisions
 
-- **Status:** aceito
-- **Data:** 2026-08-20
+- **Status:** accepted
+- **Date:** 2026-08-20
 
-## Contexto
+## Context
 
-O documento de produto deixa deliberadamente em aberto escolhas materiais de implementação
-(framework HTTP, driver de banco, geração de queries, sistema de migrations) e exige que elas
-sejam registradas. Sem um registro, a motivação de cada escolha se perde e revisitá-la vira
-arqueologia de código.
+The product document deliberately leaves material implementation choices open (HTTP framework,
+database driver, query generation, migration system) and requires them to be recorded. Without a
+record, the motivation behind each choice is lost and revisiting it turns into code archaeology.
 
-## Decisão
+## Decision
 
-Toda decisão material de arquitetura será registrada como um ADR numerado neste diretório,
-usando um template MADR reduzido: contexto, decisão, consequências e gatilho de reavaliação.
+Every material architecture decision is recorded as a numbered ADR in this directory, using a
+reduced MADR template: context, decision, consequences and reassessment trigger.
 
-- Numeração sequencial de quatro dígitos, nunca reaproveitada.
-- Um ADR nunca é editado depois de aceito. Para mudar a decisão, escreva um novo ADR e marque
-  o anterior como `substituído por ADR NNNN`.
-- Status possíveis: `proposto`, `aceito`, `substituído`, `descartado`.
+- Sequential four-digit numbering, never reused.
+- An ADR is never edited after being accepted. To change the decision, write a new ADR and mark the
+  previous one as `superseded by ADR NNNN`.
+- Possible statuses: `proposed`, `accepted`, `superseded`, `rejected`.
 
-## Consequências
+## Consequences
 
-Mudanças estruturais passam a exigir um documento curto antes do código, o que adiciona um passo
-ao fluxo. Em troca, cada escolha carrega sua justificativa e a condição sob a qual deve ser
-revista.
+Structural changes now require a short document before the code, which adds a step to the flow. In
+exchange, every choice carries its rationale and the condition under which it should be revisited.
 
-## Gatilho de reavaliação
+## Reassessment trigger
 
-Nenhum. Este ADR descreve o processo em si.
+None. This ADR describes the process itself.

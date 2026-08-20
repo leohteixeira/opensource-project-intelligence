@@ -1,22 +1,21 @@
 # Migrations
 
-Migrations são arquivos SQL versionados, aplicados em ordem lexicográfica por
-`scripts/migrate.sh`. A decisão de usar SQL explícito, sem ORM e sem framework de migrations, está
-registrada em
+Migrations are versioned SQL files, applied in lexicographic order by `scripts/migrate.sh`. The
+decision to use explicit SQL, with no ORM and no migration framework, is recorded in
 [`../specs/adrs/0003-persistence-driver-and-migrations.md`](../specs/adrs/0003-persistence-driver-and-migrations.md).
 
-## Convenção de nome
+## Naming convention
 
 ```text
-NNNN_descricao_em_snake_case.sql
+NNNN_description_in_snake_case.sql
 ```
 
-`NNNN` é um contador sequencial de quatro dígitos, nunca reaproveitado.
+`NNNN` is a four-digit sequential counter, never reused.
 
-## Regras
+## Rules
 
-- Datas e timestamps são armazenados em UTC (`timestamptz`).
-- Identificadores externos (por exemplo o `id` numérico do GitHub) recebem constraint de
-  unicidade, para que a sincronização incremental seja idempotente.
-- Payloads brutos necessários para auditoria e reprocessamento ficam em colunas `JSONB`.
-- Nenhuma migration de negócio existe ainda: o repositório está na fase de fundação.
+- Dates and timestamps are stored in UTC (`timestamptz`).
+- External identifiers (for example the numeric GitHub `id`) carry a uniqueness constraint, so that
+  incremental synchronization is idempotent.
+- Raw payloads needed for audit and reprocessing live in `JSONB` columns.
+- No business migration exists yet: the repository is in the foundation phase.

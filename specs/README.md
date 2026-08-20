@@ -1,14 +1,14 @@
-# Especificações — Open Source Project Intelligence
+# Specifications — Open Source Project Intelligence
 
-A especificação de produto que originou este repositório vive no meta-workspace, em
-`/workspace/docs/`. Este diretório guarda as especificações versionadas **junto ao código** e as
-decisões de arquitetura.
+The product specification this repository originated from lives in the meta-workspace, under
+`/workspace/docs/`. This directory holds the versioned specifications kept **next to the code**
+along with the architecture decisions.
 
-## Estrutura prevista
+## Planned structure
 
-A seção "Specification-Driven Development" do documento de produto prevê a estrutura numerada
-abaixo. Os arquivos serão escritos conforme cada capacidade for implementada; hoje o repositório
-está na fase de fundação e nenhum deles existe ainda.
+The "Specification-Driven Development" section of the product document describes the numbered
+structure below. The files are written as each capability is implemented; today the repository is
+in the foundation phase and none of them exists yet.
 
 ```text
 specs/
@@ -27,8 +27,8 @@ specs/
 
 ## ADRs
 
-`adrs/` contém as decisões de arquitetura já tomadas. Toda decisão material sobre framework,
-persistência, telemetria ou toolchain precisa de um ADR antes de virar código.
+`adrs/` holds the architecture decisions already taken. Every material decision about a framework,
+persistence, telemetry or toolchain needs an ADR before it becomes code.
 
-As especificações e a documentação voltada ao usuário podem ser escritas em português. Código,
-identificadores, comentários, nomes de branch e mensagens de commit permanecem em inglês.
+Specifications and user-facing documentation are written in English, like the rest of the
+repository: code, identifiers, comments, branch names and commit messages.

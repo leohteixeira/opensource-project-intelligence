@@ -1,34 +1,33 @@
-# ADR 0005 — Observabilidade com OpenTelemetry
+# ADR 0005 — Observability with OpenTelemetry
 
-- **Status:** aceito
-- **Data:** 2026-08-20
+- **Status:** accepted
+- **Date:** 2026-08-20
 
-## Contexto
+## Context
 
-A especificação exige instrumentação com OpenTelemetry de collection jobs, chamadas de API, erros
-de fonte, latência de ingestão, enrichment, execuções de agente, custo de LLM e jobs de analytics,
-com logs, métricas e traces correlacionáveis. Um critério de conclusão do MVP é que API e jobs
-tenham logs, métricas e traces correlacionáveis.
+The specification requires OpenTelemetry instrumentation of collection jobs, API calls, source
+errors, ingestion latency, enrichment, agent runs, LLM cost and analytics jobs, with correlatable
+logs, metrics and traces. One of the MVP completion criteria is that the API and the jobs have
+correlatable logs, metrics and traces.
 
-## Decisão
+## Decision
 
-- OpenTelemetry Go 1.45.0 configurado em `internal/platform/telemetry`, consumido pelos dois
-  binários.
-- Propagação `TraceContext` + `Baggage` sempre instalada.
-- Exportação OTLP ativada **somente** quando `OTEL_EXPORTER_OTLP_ENDPOINT` está definido, para que
-  o processo funcione sem um collector local.
-- Instrumentação HTTP do servidor via `otelhttp`.
-- Logging com **`log/slog`** da standard library, handler JSON. Sem zap e sem zerolog.
-- Connection strings, tokens do GitHub e chaves de provider nunca entram em log, span ou métrica.
-  O package `database` redige credenciais antes de propagar um erro.
+- OpenTelemetry Go 1.45.0 configured in `internal/platform/telemetry`, consumed by both binaries.
+- `TraceContext` + `Baggage` propagation always installed.
+- OTLP export enabled **only** when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, so that the process runs
+  without a local collector.
+- Server-side HTTP instrumentation through `otelhttp`.
+- Logging with the standard library **`log/slog`**, JSON handler. No zap and no zerolog.
+- Connection strings, GitHub tokens and provider keys never reach a log, a span or a metric. The
+  `database` package redacts credentials before propagating an error.
 
-## Consequências
+## Consequences
 
-Um único ponto de configuração para telemetria. A correlação entre log e trace ainda não é
-automática: quando os handlers de negócio existirem, o `trace_id` precisará ser adicionado ao
-`slog.Logger` do request.
+A single configuration point for telemetry. Correlation between log and trace is not automatic yet:
+once the business handlers exist, the `trace_id` will have to be added to the request's
+`slog.Logger`.
 
-## Gatilho de reavaliação
+## Reassessment trigger
 
-Substituir `log/slog` apenas se for necessário um sink que ele não cubra. Adicionar um handler
-`slog` que injete `trace_id`/`span_id` assim que existir o primeiro endpoint de negócio.
+Replace `log/slog` only if a sink is needed that it does not cover. Add a `slog` handler injecting
+`trace_id`/`span_id` as soon as the first business endpoint exists.

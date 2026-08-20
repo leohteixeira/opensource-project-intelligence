@@ -1,41 +1,42 @@
-# ADR 0003 — Driver PostgreSQL, geração de queries e migrations
+# ADR 0003 — PostgreSQL driver, query generation and migrations
 
-- **Status:** aceito
-- **Data:** 2026-08-20
+- **Status:** accepted
+- **Date:** 2026-08-20
 
-## Contexto
+## Context
 
-A especificação exige SQL explícito, migrations versionadas, transações nos limites dos casos de
-uso, datas em UTC e constraints de unicidade em identificadores externos. Também exige que as
-decisões sobre driver, geração de queries e sistema de migrations sejam registradas em ADR.
+The specification requires explicit SQL, versioned migrations, transactions at use case
+boundaries, dates in UTC and uniqueness constraints on external identifiers. It also requires the
+decisions about the driver, query generation and migration system to be recorded in an ADR.
 
-## Decisão
+## Decision
 
-- Driver **`github.com/jackc/pgx/v5`** com `pgxpool`, encapsulado em
-  `internal/platform/database`. Nenhum package de negócio importa pgx diretamente.
-- **Sem ORM e sem gerador de queries.** O SQL é escrito à mão. `sqlc` foi avaliado e descartado
-  nesta fase: ainda não existe schema, e o benefício aparece quando há muitas queries estáveis.
-- Migrations são **arquivos SQL versionados** em `migrations/`, aplicados em ordem lexicográfica
-  por `scripts/migrate.sh`, que controla o que já rodou na tabela `schema_migrations`.
-- `goose` foi avaliado como _tool dependency_ e descartado: ele triplicava a árvore de dependências
-  do módulo (de 23 para 68 requires indiretos e de 85 para 290 linhas em `go.sum`), porque carrega
-  drivers de ClickHouse, SQLite e outros bancos que este projeto não usa. O runner em shell atende
-  ao mesmo requisito e mantém o módulo enxuto e igual ao dos repositórios irmãos do portfólio.
-- Erros de conexão passam por `redact` antes de virarem log: o pgx inclui a connection string em
-  algumas falhas, e ela carrega credenciais.
-- Payloads brutos necessários para auditoria e reprocessamento ficam em colunas `JSONB`, com a
-  opção de migrar para object storage sem alterar os contratos do domínio.
+- Driver **`github.com/jackc/pgx/v5`** with `pgxpool`, wrapped in `internal/platform/database`. No
+  business package imports pgx directly.
+- **No ORM and no query generator.** SQL is written by hand. `sqlc` was evaluated and rejected in
+  this phase: there is no schema yet, and the benefit shows up once there are many stable queries.
+- Migrations are **versioned SQL files** in `migrations/`, applied in lexicographic order by
+  `scripts/migrate.sh`, which tracks what has already run in the `schema_migrations` table.
+- `goose` was evaluated as a _tool dependency_ and rejected: it tripled the module's dependency
+  tree (from 23 to 68 indirect requires and from 85 to 290 lines in `go.sum`), because it carries
+  drivers for ClickHouse, SQLite and other databases this project does not use. The shell runner
+  meets the same requirement and keeps the module lean and consistent with the sibling repositories
+  in the portfolio.
+- Connection errors go through `redact` before being logged: pgx includes the connection string in
+  some failures, and it carries credentials.
+- Raw payloads needed for audit and reprocessing live in `JSONB` columns, with the option to move
+  to object storage without changing the domain contracts.
 
-## Consequências
+## Consequences
 
-Cada query precisa de mapeamento manual de linha para struct, o que custa mais código. Em troca, o
-SQL que produz uma métrica fica visível e revisável — condição para a auditabilidade que o produto
-exige. O runner em shell não tem migration de rollback automática; o rollback é escrito como uma
-migration nova.
+Every query needs manual row-to-struct mapping, which costs more code. In exchange, the SQL that
+produces a metric stays visible and reviewable — a precondition for the auditability the product
+requires. The shell runner has no automatic rollback migration; a rollback is written as a new
+migration.
 
-## Gatilho de reavaliação
+## Reassessment trigger
 
-Adotar `sqlc` quando o número de queries escritas à mão passar de algo em torno de 30, ou quando o
-mapeamento manual começar a produzir defeitos recorrentes. Adotar `goose` ou `golang-migrate` se o
-runner em shell deixar de atender, por exemplo por precisar de migrations transacionais complexas
-ou de rollback automatizado.
+Adopt `sqlc` once the number of hand-written queries passes roughly 30, or once manual mapping
+starts producing recurring defects. Adopt `goose` or `golang-migrate` if the shell runner stops
+being enough, for example because complex transactional migrations or automated rollback are
+needed.

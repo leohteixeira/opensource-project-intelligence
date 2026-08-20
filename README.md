@@ -1,72 +1,71 @@
 # Open Source Project Intelligence
 
-Plataforma para coletar, acompanhar, comparar e analisar projetos open source. O objetivo não é um
-dashboard sobre o GitHub, e sim uma camada de inteligência que transforma commits, issues, pull
-requests, releases e contributors em respostas sobre saúde, sustentabilidade, momentum e risco de
-abandono.
+Platform for collecting, tracking, comparing and analyzing open source projects. The goal is not a
+GitHub dashboard, but an intelligence layer that turns commits, issues, pull requests, releases and
+contributors into answers about health, sustainability, momentum and abandonment risk.
 
-A especificação de produto vive em `/workspace/docs/opensource_project_intelligence.md`.
+The product specification lives at `/workspace/docs/opensource_project_intelligence.md`.
 
-> Estado atual: **fundação**. A estrutura, o ferramental e os processos estão prontos; não existem
-> entidades, collectors, métricas nem endpoints de negócio.
+> Current state: **foundation**. Structure, tooling and processes are in place; there are no
+> entities, no collectors, no metrics and no business endpoints.
 
 ## Stack
 
-| Camada       | Escolha                                                         |
-| ------------ | --------------------------------------------------------------- |
-| API          | Go 1.26 com `net/http` e `http.ServeMux` da stdlib (porta 8100) |
-| Worker       | binário Go separado, mesma base de packages                     |
-| Persistência | PostgreSQL 18 via `pgx/v5`, SQL explícito, sem ORM              |
-| Migrations   | SQL versionado aplicado por `scripts/migrate.sh`                |
-| Web          | React 19 + Vite 8 + TypeScript 5.9.3 (porta 3100)               |
-| Telemetria   | OpenTelemetry Go 1.45 e `log/slog`                              |
-| Testes       | `testing` da stdlib, table-driven, com detector de race         |
+| Layer       | Choice                                                         |
+| ----------- | -------------------------------------------------------------- |
+| API         | Go 1.26 with stdlib `net/http` and `http.ServeMux` (port 8100) |
+| Worker      | separate Go binary, same package base                          |
+| Persistence | PostgreSQL 18 via `pgx/v5`, explicit SQL, no ORM               |
+| Migrations  | versioned SQL applied by `scripts/migrate.sh`                  |
+| Web         | React 19 + Vite 8 + TypeScript 5.9.3 (port 3100)               |
+| Telemetry   | OpenTelemetry Go 1.45 and `log/slog`                           |
+| Tests       | stdlib `testing`, table-driven, with the race detector         |
 
-As decisões estão registradas em [`specs/adrs/`](specs/adrs/).
+The decisions are recorded in [`specs/adrs/`](specs/adrs/).
 
 ## Layout
 
 ```text
 cmd/
-├── api/         # servidor HTTP
-└── worker/      # scheduler e collectors
+├── api/         # HTTP server
+└── worker/      # scheduler and collectors
 internal/
 ├── project/ repository/ collector/ issue/ pullrequest/
 ├── release/ contributor/ metric/ comparison/ analysis/
 └── platform/
-    ├── config/     # configuração por ambiente
-    ├── database/   # pool pgx
-    ├── github/     # adapter da API do GitHub
-    ├── httpx/      # servidor e respostas JSON
-    ├── llm/        # abstração de modelos
+    ├── config/     # configuration from the environment
+    ├── database/   # pgx pool
+    ├── github/     # GitHub API adapter
+    ├── httpx/      # server and JSON responses
+    ├── llm/        # model abstraction
     └── telemetry/  # OpenTelemetry
-migrations/      # SQL versionado
-apps/web/        # frontend React
-specs/adrs/      # decisões de arquitetura
+migrations/      # versioned SQL
+apps/web/        # React frontend
+specs/adrs/      # architecture decisions
 ```
 
-Packages são organizados por capacidade de negócio, com nomes curtos e sem dependências cíclicas.
-Não existe package `utils`. Interfaces são pequenas e declaradas pelo package que as consome.
+Packages are organized by business capability, with short names and no cyclic dependencies. There
+is no `utils` package. Interfaces are small and declared by the package that consumes them.
 
-## Como começar
+## Getting started
 
 ```bash
-cp env.example .env          # ajuste se precisar
+cp env.example .env          # adjust if needed
 pnpm install --frozen-lockfile
 go mod download
-lefthook install             # instala os git hooks
+lefthook install             # installs the git hooks
 ```
 
-O arquivo de exemplo se chama `env.example`, sem ponto inicial, porque o `.claudeignore` da raiz do
-workspace exclui todo caminho `.env.*`.
+The example file is named `env.example`, without a leading dot, because the workspace root
+`.claudeignore` excludes every `.env.*` path.
 
-## Comandos
+## Commands
 
 ```bash
-make help          # lista os alvos
+make help          # lists the targets
 make build
 make test-race
-make check         # gofmt, go vet, race e build — o mesmo que a CI roda
+make check         # gofmt, go vet, race and build — the same thing CI runs
 make run-api       # http://0.0.0.0:8100
 make run-worker
 
@@ -81,32 +80,32 @@ DATABASE_URL=postgres://opensource:opensource@localhost:5433/opensource_project_
   make migrate
 ```
 
-O `Makefile` define `GOTMPDIR` fora de `/tmp` porque alguns hosts montam `/tmp` com `noexec`, o que
-impede o `go test` de executar os binários de teste que ele compila.
+The `Makefile` sets `GOTMPDIR` outside `/tmp` because some hosts mount `/tmp` with `noexec`, which
+prevents `go test` from running the test binaries it compiles.
 
 ## Endpoints
 
-| Método | Rota      | Descrição                                               |
-| ------ | --------- | ------------------------------------------------------- |
-| `GET`  | `/health` | Liveness. Não toca em dependência alguma.               |
-| `GET`  | `/ready`  | Readiness. Responde 503 quando o PostgreSQL não atende. |
-| —      | `/api/v1` | Superfície versionada do contrato, ainda vazia.         |
+| Method | Route     | Description                                            |
+| ------ | --------- | ------------------------------------------------------ |
+| `GET`  | `/health` | Liveness. Touches no dependency at all.                |
+| `GET`  | `/ready`  | Readiness. Answers 503 when PostgreSQL does not reply. |
+| —      | `/api/v1` | Versioned contract surface, still empty.               |
 
-## Portas
+## Ports
 
-Web 3100, API 8100, PostgreSQL 5433. Este produto não usa Valkey, broker externo nem object
-storage: eles estão explicitamente fora do escopo do MVP.
+Web 3100, API 8100, PostgreSQL 5433. This product uses no Valkey, no external broker and no object
+storage: they are explicitly out of the MVP scope.
 
-## Qualidade
+## Quality
 
-Os hooks do lefthook rodam gitleaks, prettier, markdownlint, hadolint, `gofmt`, `go vet` e ESLint
-no `pre-commit`; validam Conventional Commits no `commit-msg`; e rodam a varredura de histórico do
-gitleaks mais `make check` e os testes do web no `pre-push`.
+The lefthook hooks run gitleaks, prettier, markdownlint, hadolint, `gofmt`, `go vet` and ESLint on
+`pre-commit`; they validate Conventional Commits on `commit-msg`; and they run the gitleaks history
+scan plus `make check` and the web tests on `pre-push`.
 
 ```bash
 lefthook run pre-commit --all-files
 gitleaks git --redact --no-banner
 ```
 
-Commits seguem Conventional Commits em inglês. Especificações e documentação voltada ao usuário
-podem ser escritas em português; código, identificadores e comentários permanecem em inglês.
+Everything in this repository is written in English: code, identifiers, comments, branch names,
+commit messages, specifications and documentation. Commits follow Conventional Commits.

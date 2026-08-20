@@ -1,40 +1,40 @@
-# ADR 0004 — Estratégia de testes
+# ADR 0004 — Testing strategy
 
-- **Status:** aceito
-- **Data:** 2026-08-20
+- **Status:** accepted
+- **Date:** 2026-08-20
 
-## Contexto
+## Context
 
-A especificação exige testes table-driven para regras e métricas determinísticas e execução do
-detector de race conditions nos componentes concorrentes. O CLAUDE.md exige `go test ./...` e
-`go test -race ./...`, além dos scripts pnpm para a aplicação web.
+The specification requires table-driven tests for deterministic rules and metrics, and running the
+race detector on concurrent components. CLAUDE.md requires `go test ./...` and `go test -race ./...`,
+plus the pnpm scripts for the web application.
 
-## Decisão
+## Decision
 
-- Testes com o package **`testing` da standard library**, no estilo table-driven. Sem `testify`
-  e sem framework de mock: dublês de teste são escritos à mão como implementações das interfaces
-  pequenas declaradas pelos packages consumidores.
-- Testes em package externo (`package foo_test`) por padrão, para exercitar a API pública.
-  Package interno apenas quando o alvo for uma função não exportada, como `redact`.
-- `make test-race` roda o detector de race conditions; `make check` reúne formatação, vet, race e
-  build, e é o que o `pre-push` e a CI executam.
-- A aplicação web usa **Vitest 4**, executado por `pnpm test`.
-- Testes de integração contra PostgreSQL real serão adicionados junto com o primeiro repositório
-  concreto, usando o banco do `compose.yaml`.
+- Tests with the **standard library `testing` package**, in table-driven style. No `testify` and no
+  mocking framework: test doubles are hand-written as implementations of the small interfaces
+  declared by the consuming packages.
+- External test package (`package foo_test`) by default, to exercise the public API. Internal
+  package only when the target is an unexported function, such as `redact`.
+- `make test-race` runs the race detector; `make check` bundles formatting, vet, race and build,
+  and is what `pre-push` and CI execute.
+- The web application uses **Vitest 4**, run through `pnpm test`.
+- Integration tests against a real PostgreSQL will be added together with the first concrete
+  repository, using the database from `compose.yaml`.
 
 ### GOTMPDIR
 
-O `Makefile` define `GOTMPDIR ?= $(HOME)/.cache/go-tmp`. Alguns hosts endurecidos montam `/tmp`
-com `noexec`, e o `go test` compila os binários de teste no diretório temporário antes de
-executá-los — sem isso, todo teste falha com `fork/exec ...: permission denied`. A variável é
-sobrescrevível e o valor padrão funciona também em runners de CI.
+The `Makefile` sets `GOTMPDIR ?= $(HOME)/.cache/go-tmp`. Some hardened hosts mount `/tmp` with
+`noexec`, and `go test` compiles the test binaries into the temporary directory before running
+them — without this, every test fails with `fork/exec ...: permission denied`. The variable can be
+overridden and the default value also works on CI runners.
 
-## Consequências
+## Consequences
 
-Mensagens de falha mais verbosas do que com uma biblioteca de asserção, e mais linhas por dublê de
-teste. Em troca, zero dependência de teste no módulo e contratos de porta explícitos.
+More verbose failure messages than with an assertion library, and more lines per test double. In
+exchange, zero test dependencies in the module and explicit port contracts.
 
-## Gatilho de reavaliação
+## Reassessment trigger
 
-Adotar `testcontainers-go` quando existir a primeira suíte de integração que precise subir e
-derrubar PostgreSQL por teste.
+Adopt `testcontainers-go` once there is a first integration suite that needs to start and stop
+PostgreSQL per test.
