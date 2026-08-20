@@ -1,0 +1,30 @@
+title = "Open Source Project Intelligence secret scanning"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "portfolio-postgres-connection-uri"
+description = "PostgreSQL URI carrying inline credentials"
+regex = '''(?i)postgres(?:ql)?://[^\s:@/]+:[^\s@/]+@'''
+tags = ["database", "credentials"]
+
+  # Scoped allowlist. The default gitleaks rules still scan every file listed
+  # here; only this project-specific rule tolerates credentials that point at a
+  # local development host.
+  [rules.allowlist]
+  description = "Local development credentials committed on purpose"
+  condition = "OR"
+  regexTarget = "line"
+  regexes = ['''@(localhost|127\.0\.0\.1|postgres|db)(:[0-9]+)?/''']
+  paths = ['''(^|/)env\.example$''', '''(^|/)compose\.yaml$''']
+
+[[rules]]
+id = "portfolio-llm-provider-key"
+description = "Language model provider API key"
+regex = '''(?i)\b(sk-ant-[A-Za-z0-9_-]{24,}|sk-[A-Za-z0-9]{32,}|AIza[0-9A-Za-z_-]{35})\b'''
+tags = ["llm", "credentials"]
+
+[allowlist]
+description = "Generated lockfiles"
+paths = ['''(^|/)pnpm-lock\.yaml$''', '''(^|/)go\.sum$''']

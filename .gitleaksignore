@@ -1,0 +1,6 @@
+# Fingerprints of gitleaks findings that were reviewed and confirmed to be false
+# positives. Append one fingerprint per line, taken from the gitleaks report:
+#
+#   <commit-sha>:<file-path>:<rule-id>:<start-line>
+#
+# Never add a fingerprint for a value that is a real credential. Rotate it instead.
