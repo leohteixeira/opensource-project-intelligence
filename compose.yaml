@@ -1,0 +1,65 @@
+name: opensource-project-intelligence
+
+# The MVP depends on PostgreSQL only. Valkey, an external broker and object
+# storage are explicitly out of scope, so no such service is declared here.
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-opensource_project_intelligence}
+      POSTGRES_USER: ${POSTGRES_USER:-opensource}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opensource}
+    ports:
+      - '${POSTGRES_PORT:-5433}:5432'
+    volumes:
+      # PostgreSQL 18 expects a single mount at /var/lib/postgresql and
+      # places the cluster in a version-specific subdirectory; mounting
+      # /var/lib/postgresql/data makes the image refuse to start.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-opensource}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      HTTP_ADDRESS: 0.0.0.0:8100
+      DATABASE_URL: postgres://${POSTGRES_USER:-opensource}:${POSTGRES_PASSWORD:-opensource}@postgres:5432/${POSTGRES_DB:-opensource_project_intelligence}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    ports:
+      - '${API_PORT:-8100}:8100'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_URL: postgres://${POSTGRES_USER:-opensource}:${POSTGRES_PASSWORD:-opensource}@postgres:5432/${POSTGRES_DB:-opensource_project_intelligence}
+      WORKER_INTERVAL: ${WORKER_INTERVAL:-30s}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-4}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    ports:
+      - '${WEB_PORT:-3100}:3100'
+    depends_on:
+      - api
+
+volumes:
+  postgres-data:
