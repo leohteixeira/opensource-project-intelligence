@@ -1,26 +1,30 @@
 # UI/UX Change Map: Open Source Project Intelligence
 
-Every browser surface the product adds, its required states, and its production mapping. Reference
-artboards land under `docs/design/opendesign/opensource-project-intelligence/` and become visual
-contracts for implementation tasks.
+Every browser surface the product adds, its required states, and its production mapping. The
+renderable reference implementation is vendored under `apps/web/src/design-system/` and
+`apps/web/src/kits/`; those React fixtures, together with repository ADR 0007, are the visual
+contracts for implementation tasks. The previously proposed standalone HTML artboards are
+superseded and are not an additional deliverable.
 
 Companions: `_spec.md` Part I is the behavior authority, `_user_stories.md` supplies acceptance and
 edge states, and `_dx.md` freezes the non-visual browser and HTTP contract.
 
 ## Current UI baseline
 
-The current application is one placeholder `<main>` with a heading and backend URL at
-`apps/web/src/App.tsx:3`; it has no navigation, routing, forms, authentication, data fetching,
-charts, tables, localization, responsive system, accessibility tests, or component inventory. Its
-only web configuration is the API base URL at `apps/web/src/config.ts:5`, and React mounts directly
-at `apps/web/src/main.tsx:6`.
+The current application vendors a typed design system and four fixture-backed shells. Tokens and
+interaction styles live under `apps/web/src/design-system/styles/`; reusable primitives and
+intelligence components are exported only through `apps/web/src/design-system/index.ts`; and the
+public catalog, member workspace, project evidence, and administration references live under
+`apps/web/src/kits/`. `apps/web/src/App.tsx` provides a temporary shell selector so every reference
+can be inspected before product routing exists.
 
-The repository has no `DESIGN.md`, `COPY.md`, `packages/ui`, `@compozy/ui`, or token inventory.
-Because this is an independent repository and cross-repository source sharing is forbidden, the
-design pass must establish repository-local `apps/web/DESIGN.md`, `apps/web/COPY.md`, and
-`apps/web/src/styles/tokens.css` before producing artboards. Generic primitives belong in
-`apps/web/src/ui/`; domain composites belong in `apps/web/src/systems/<domain>/`. Artboard CSS is a
-visual contract and is never imported into production.
+The reference implementation is intentionally not connected to product behavior yet. It has no
+localized router, authentication/session provider, HTTP client integration, persisted URL state,
+or production data. Each kit owns illustrative data in one `fixtures.ts`, which is replaced by the
+versioned HTTP contract during implementation. `apps/web/README.md` records the component rules,
+substituted assets, and fixture caveats; `specs/adrs/0007-design-system-and-icon-set.md` records the
+accepted repository decision. The required states below remain authoritative even when a fixture
+screen currently demonstrates only a representative subset.
 
 ## Design constraints
 
@@ -73,9 +77,10 @@ paths are `/pt-br/portfolio`, `/pt-br/projetos`, `/pt-br/comparar`, `/pt-br/rada
 appear contextually, not as a separate administration area. Admin navigation adds **Members**,
 **Policies**, **Audit**, and **Operations**.
 
-On desktop the primary navigation is a persistent left rail. On mobile it is a five-item bottom bar;
-Admin pages, preferences, archive, and less-frequent destinations live in the top-right menu. The
-Project detail uses a scrollable tab list with an adjacent overflow menu, not a second nested rail.
+On desktop the primary navigation is a single persistent 64-pixel top bar, as accepted by repository
+ADR 0007 and implemented by `AppShell`. On mobile it becomes a five-item bottom bar; Admin pages,
+preferences, archive, and less-frequent destinations live in the top-right menu. The Project detail
+uses a scrollable tab list with an adjacent overflow menu, not a nested rail.
 
 Project tabs use
 `/en/projects/:id/{overview,health,contributors,adoption-security,trends,topics, releases,knowledge,sources-jobs}`
@@ -125,7 +130,9 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   Viewer/Analyst/ Admin, suspended, offline, session expired, route not found, unauthorized deep
   link, narrow/medium/ wide viewport, keyboard focus order, English, Portuguese, and 200% zoom
   (US-001 EC-4/8; US-002 AC-2/3 and EC-6/9; US-031 all ACs/ECs).
-- **Artboard**: `opensource-project-intelligence-app-shell.html`.
+- **Reference implementation**: `apps/web/src/App.tsx`,
+  `apps/web/src/design-system/navigation/AppShell.tsx`, and the four `*Kit.tsx` shell files under
+  `apps/web/src/kits/`.
 
 ### S2. Public catalog and teaser
 
@@ -134,7 +141,8 @@ panel on desktop and a dedicated full-screen localized route on mobile.
 - **States to design**: populated, empty, searching, no matches, cursor-backed numbered previous/
   current/next pages, retained stale page after failure, archived-between-pages, protected deep
   link, and 100-times catalog scale (US-001 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-public-catalog.html`.
+- **Reference implementation**: `apps/web/src/kits/public-catalog/CatalogScreen.tsx` and
+  `apps/web/src/kits/public-catalog/TeaserScreen.tsx`.
 
 ### S3. Sign-in, pending access, and account
 
@@ -143,7 +151,8 @@ panel on desktop and a dedicated full-screen localized route on mobile.
 - **States to design**: redirecting, callback failure, invalid flow, pending, rejected, suspended,
   newly approved, unsupported locale/timezone, save conflict, delete confirmation, delete running,
   deleted, and last-Admin prevention (US-002, US-003 EC-9, US-004).
-- **Artboard**: `opensource-project-intelligence-access-account.html`.
+- **Reference implementation**: `apps/web/src/kits/public-catalog/AccessScreen.tsx` and the account
+  controls in `apps/web/src/kits/workspace/WorkspaceKit.tsx`.
 
 ### S4. Portfolio overview
 
@@ -152,7 +161,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
 - **States to design**: populated, no Projects by role, filtered empty, mixed fresh/stale/unknown,
   partial panel error with retained valid panels, new-snapshot refresh, archived removal, and large
   portfolio aggregation (US-005 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-portfolio.html`.
+- **Reference implementation**: `apps/web/src/kits/workspace/PortfolioScreen.tsx`.
 
 ### S5. Project catalog, registration, and identity
 
@@ -162,7 +171,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   hostile URL, quota reached, duplicate active/archived Project, concurrent duplicate resolution,
   accepted initial sync, recoverable collection failure, stale edit, and high concurrent backfill
   (US-006, US-007 EC-1/5/8/9).
-- **Artboard**: `opensource-project-intelligence-project-registration.html`.
+- **Reference implementation**: `apps/web/src/kits/workspace/ProjectsScreen.tsx`.
 
 ### S6. Project lifecycle
 
@@ -171,7 +180,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   restore target choice/running, conflicting transition, scheduled-work cancellation, exact typed
   deletion, purge running, tombstone outcome, repeated deletion, and forbidden Analyst/Viewer
   (US-009 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-project-lifecycle.html`.
+- **Reference implementation**: `apps/web/src/kits/project-evidence/LifecycleScreen.tsx`.
 
 ### S7. Repositories, sources, and associations
 
@@ -182,7 +191,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   corrected/split/reassigned/constraint retained, concurrent correction, source unavailable,
   credential absent/redacted, hostile URL, pagination, and archived read-only (US-007, US-008,
   US-012 AC-1–3 and EC-1–10).
-- **Artboard**: `opensource-project-intelligence-sources-associations.html`.
+- **Reference implementation**: `apps/web/src/kits/project-evidence/SourcesScreen.tsx`.
 
 ### S8. Jobs, synchronization, and history
 
@@ -193,7 +202,9 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   cancelled, coalesced request, stale source, rate-limited with reset, quota rejected, worker
   restart/resumed checkpoint, requested-vs-actual coverage, older open item, no successful
   collection, concurrent recalculation, and high-volume pagination (US-010, US-011, US-012).
-- **Artboard**: `opensource-project-intelligence-jobs-history.html`.
+- **Reference implementation**: the Sources & Jobs state in
+  `apps/web/src/kits/workspace/ProjectDetailScreen.tsx` and job states in
+  `apps/web/src/kits/project-evidence/SourcesScreen.tsx`.
 
 ### S9. Metrics and health
 
@@ -203,7 +214,9 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   and absent when requirements fail, available zero, unknown, not applicable, insufficient data,
   stale, mixed versions prevented, formula version comparison, custom window out of coverage,
   evidence page failure, and mobile metric table (US-013 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-metrics-health.html`.
+- **Reference implementation**: the Health state in
+  `apps/web/src/kits/workspace/ProjectDetailScreen.tsx` and
+  `apps/web/src/kits/project-evidence/OverviewScreen.tsx`.
 
 ### S10. Contributor intelligence
 
@@ -213,7 +226,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   conflicting merge, concentration warning, unknown retention, bot/service-account treatment,
   paginated contributors, and translated labels without translating identities (US-014 AC-1–3,
   EC-1–10).
-- **Artboard**: `opensource-project-intelligence-contributors.html`.
+- **Reference implementation**: `apps/web/src/kits/project-evidence/ContributorsScreen.tsx`.
 
 ### S11. Adoption and security
 
@@ -223,7 +236,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   incomparable signals, unavailable source, no public advisories as unknown evidence rather than
   safe, security release, conflicting advisory, stale cutoff, high-volume timeline, and mobile
   disclosure (US-015 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-adoption-security.html`.
+- **Reference implementation**: `apps/web/src/kits/project-evidence/AdoptionSecurityScreen.tsx`.
 
 ### S12. Comparison workspace
 
@@ -233,7 +246,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   preset/custom window, insufficient common coverage, numeric zero vs missing/not-applicable/
   incomparable, version mismatch rejection, one Project archived during selection, partial evidence
   failure, wide desktop matrix, and narrow row-detail mode (US-016 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-comparison.html`.
+- **Reference implementation**: `apps/web/src/kits/workspace/CompareScreen.tsx`.
 
 ### S13. Trends and early warnings
 
@@ -242,7 +255,8 @@ panel on desktop and a dedicated full-screen localized route on mobile.
 - **States to design**: observed increase/decrease/stable, early warning, no signal, insufficient
   history, poor coverage, stale model, corrected evidence, AI explanation unavailable, overlapping
   signals, dense timeline, and screen-reader chart alternative (US-017 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-trends-warnings.html`.
+- **Reference implementation**: the Trends state in
+  `apps/web/src/kits/workspace/ProjectDetailScreen.tsx`.
 
 ### S14. Recommendation and policy governance
 
@@ -252,7 +266,9 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   missing inputs, policy unavailable, stale evaluation, draft/superseded/active versions, empty rule
   tree, unknown metric/operator, unsaved changes, conflicting activation, prior evaluations
   retained, last policy protection, and large rule tree keyboard editing (US-018, US-019).
-- **Artboard**: `opensource-project-intelligence-recommendations-policies.html`.
+- **Reference implementation**: recommendation panels in
+  `apps/web/src/kits/workspace/PortfolioScreen.tsx` and
+  `apps/web/src/kits/administration/PoliciesScreen.tsx`.
 
 ### S15. Technology radar
 
@@ -262,7 +278,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   active/expired override, due review, removed override, changed policy suggestion, project
   archived, conflicting override, empty radar, 100-times scale, keyboard/list access, and
   print/export (US-020 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-radar.html`.
+- **Reference implementation**: `apps/web/src/kits/workspace/RadarScreen.tsx`.
 
 ### S16. Issue and discussion topics
 
@@ -272,7 +288,8 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   renamed/merged/split/reassigned, correction conflict, reanalysis stale/running/failed, repeated
   correction, large taxonomy, evidence in original language, and mobile detail (US-021 AC-1–3,
   EC-1–10).
-- **Artboard**: `opensource-project-intelligence-topics.html`.
+- **Reference implementation**: the Topics state in
+  `apps/web/src/kits/workspace/ProjectDetailScreen.tsx`.
 
 ### S17. Release intelligence
 
@@ -282,7 +299,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   evidence, no claims, prerelease, duplicate tag, corrected source, AI provider unavailable with raw
   release retained, long release, large history, and original/generated translation (US-022 AC-1–3,
   EC-1–10).
-- **Artboard**: `opensource-project-intelligence-releases.html`.
+- **Reference implementation**: `apps/web/src/kits/project-evidence/ReleasesScreen.tsx`.
 
 ### S18. Documentation knowledge
 
@@ -292,7 +309,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   unsafe redirect, depth/size/type limit, empty query/no results, exact/cited result, stale
   snapshot, conflicting snapshots, AI/RAG unavailable with lexical results retained, pagination, and
   bilingual answer/evidence distinction (US-023 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-knowledge.html`.
+- **Reference implementation**: `apps/web/src/kits/project-evidence/KnowledgeScreen.tsx`.
 
 ### S19. Natural-language analysis and HITL assistant
 
@@ -303,7 +320,8 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   one safe proposal, exact inputs/effect/quota/expiry, prohibited action, expired proposal,
   permission changed, resource changed, confirm once, duplicate confirm, execution failure, and
   mobile full-screen assistant (US-024, US-025).
-- **Artboard**: `opensource-project-intelligence-assistant.html`.
+- **Reference implementation**: `apps/web/src/kits/workspace/AssistantPanel.tsx` and cited-result
+  states in `apps/web/src/kits/project-evidence/KnowledgeScreen.tsx`.
 
 ### S20. AI run governance
 
@@ -313,7 +331,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   versions, selected older version, invalid selection, feedback submitted/repeated, rerun coalesced,
   provider disabled/unhealthy/quota-limited, structured-output invalid, partial evidence, long
   output, and Admin aggregate versus Analyst per-run visibility (US-026, US-030).
-- **Artboard**: `opensource-project-intelligence-ai-runs.html`.
+- **Reference implementation**: `apps/web/src/kits/project-evidence/AiRunsScreen.tsx`.
 
 ### S21. Alerts
 
@@ -322,7 +340,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
 - **States to design**: unread/read, open/acknowledged/resolved/dismissed, deduplicated recurrence,
   invalid rule, no alerts, stale evidence, transition conflict, source recovery, large inbox, Viewer
   read-only lifecycle, Analyst rule editing, and mobile filters (US-027 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-alerts.html`.
+- **Reference implementation**: `apps/web/src/kits/workspace/AlertsScreen.tsx`.
 
 ### S22. Exports
 
@@ -332,7 +350,7 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   queued/running/succeeded/failed/cancelled, snapshot consistency during concurrent updates,
   zero-row valid export, size quota, expired download after 24 hours, permission revoked, retry,
   duplicate request/coalescing, and mobile download handoff (US-028 AC-1–3, EC-1–10).
-- **Artboard**: `opensource-project-intelligence-exports.html`.
+- **Reference implementation**: `apps/web/src/kits/project-evidence/ExportsScreen.tsx`.
 
 ### S23. Members, service accounts, audit, and operations
 
@@ -346,7 +364,8 @@ panel on desktop and a dedicated full-screen localized route on mobile.
   configured/rate-limited, credentials present but always redacted, aggregate model usage/cost,
   deterministic operation during AI outage, and partial status failure (US-003, US-012, US-029,
   US-030, US-032).
-- **Artboard**: `opensource-project-intelligence-administration.html`.
+- **Reference implementation**: `apps/web/src/kits/administration/AdministrationKit.tsx` and its
+  `MembersScreen.tsx`, `PoliciesScreen.tsx`, `AuditScreen.tsx`, and `OperationsScreen.tsx` surfaces.
 
 ## Component plan
 
@@ -362,17 +381,18 @@ panel on desktop and a dedicated full-screen localized route on mobile.
 - Virtualized data views must preserve keyboard and screen-reader access; use server pagination when
   the full collection is not loaded.
 
-### New repository-local UI primitives
+### Repository-local UI primitives
 
-There is no existing primitive inventory to reuse. The design pass must define the smallest shared
-set under `apps/web/src/ui/`: `AppShell`, `Button`, `IconButton`, `Link`, `TextField`, `TextArea`,
+The imported design system defines the shared set under `apps/web/src/design-system/`: `AppShell`,
+`Button`, `IconButton`, `Link`, `TextField`, `TextArea`,
 `Select`, `Checkbox`, `RadioGroup`, `DateRangeField`, `FormField`, `Banner`, `StatusBadge`,
 `Progress`, `Tabs`, `Menu`, `Dialog`, `Drawer`, `Table`, `Pagination`, `FilterBar`,
 `DefinitionList`, `EmptyState`, `Skeleton`, `Tooltip`, and `VisuallyHidden`. Each is justified
 because it appears on at least three surfaces or encodes a cross-product accessibility/state rule.
 
-Project-specific visualizations (`HealthDimensions`, `ComparisonMatrix`, `TrendChart`, `RadarPlot`)
-are domain components, not generic primitives.
+Project-specific visualizations (`HealthDimensions`, `ComparisonMatrix`, `TrendChart`, `RadarList`)
+remain domain-aware components under `apps/web/src/design-system/intelligence/`, not generic
+primitives.
 
 ### New domain components
 
@@ -398,8 +418,9 @@ are domain components, not generic primitives.
 
 ### Signal and state mapping
 
-Exact token names are established in `apps/web/src/styles/tokens.css`; the semantic contract below
-is frozen and token spelling is not.
+Exact token names are established by the modular styles imported from
+`apps/web/src/design-system/styles/index.css`; the semantic contract below is frozen and token
+spelling is not.
 
 | Meaning                          | Visual contract                                        | Text contract                                      |
 | -------------------------------- | ------------------------------------------------------ | -------------------------------------------------- |

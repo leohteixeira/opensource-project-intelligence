@@ -9,6 +9,10 @@ Foundation. Package structure, configuration, telemetry, a database pool, a boun
 scheduler and health endpoints exist. There are no entities, no GitHub collectors, no metrics and
 no business endpoints.
 
+The web application carries the vendored design system (`apps/web/src/design-system`) and the four
+shells (`apps/web/src/kits`) against illustrative fixtures. No screen calls the API yet: each kit
+reads one `fixtures.ts`, which is the file the HTTP contract replaces.
+
 ## Architecture rules
 
 - Packages under `internal/` are organized by business capability, with short names and no cycles.
@@ -33,6 +37,17 @@ no business endpoints.
 - Logging with `log/slog`. Never log a connection string, `GITHUB_TOKEN` or provider key —
   `internal/platform/database` redacts credentials before propagating errors.
 - Table-driven tests; concurrent components go through the race detector.
+
+## Frontend conventions
+
+- Screens import from the `design-system` barrel, never from a component file.
+- Static styling is inline `style` with `var(--token)` values; interaction states live in
+  `design-system/styles/base.css` behind the `opi-*` classes. No CSS Modules and no CSS-in-JS.
+- Icons go through `Icon` only; the vocabulary is frozen in `design-system/core/icons.ts`.
+- **Missing data is never zero.** `Unknown`, `Not applicable` and `Insufficient data` are three
+  distinct states, each with a glyph and a word, and none of them is a blank cell or a `0`.
+- Every number carries a unit, a window, a cutoff and a definition version. Colour is never the
+  only cue. See `apps/web/README.md` and ADR 0007.
 
 ## Language
 

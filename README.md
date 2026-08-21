@@ -7,7 +7,9 @@ contributors into answers about health, sustainability, momentum and abandonment
 The product specification lives at `/workspace/docs/opensource_project_intelligence.md`.
 
 > Current state: **foundation**. Structure, tooling and processes are in place; there are no
-> entities, no collectors, no metrics and no business endpoints.
+> entities, no collectors, no metrics and no business endpoints. The web application carries the
+> full interface — design system, four shells and every specified surface — against illustrative
+> fixtures, waiting for the HTTP contract.
 
 ## Stack
 
@@ -18,6 +20,7 @@ The product specification lives at `/workspace/docs/opensource_project_intellige
 | Persistence | PostgreSQL 18 via `pgx/v5`, explicit SQL, no ORM               |
 | Migrations  | versioned SQL applied by `scripts/migrate.sh`                  |
 | Web         | React 19 + Vite 8 + TypeScript 5.9.3 (port 3100)               |
+| Interface   | vendored design system, tokens and four shells in `apps/web`   |
 | Telemetry   | OpenTelemetry Go 1.45 and `log/slog`                           |
 | Tests       | stdlib `testing`, table-driven, with the race detector         |
 
@@ -43,6 +46,11 @@ migrations/      # versioned SQL
 apps/web/        # React frontend
 specs/adrs/      # architecture decisions
 ```
+
+The frontend carries the vendored design system (`src/design-system`) and the four shells
+(`src/kits`): public catalog, member workspace, project evidence and administration. See
+[`apps/web/README.md`](apps/web/README.md) and
+[ADR 0007](specs/adrs/0007-design-system-and-icon-set.md).
 
 Packages are organized by business capability, with short names and no cyclic dependencies. There
 is no `utils` package. Interfaces are small and declared by the package that consumes them.
