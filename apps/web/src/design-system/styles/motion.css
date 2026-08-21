@@ -1,0 +1,30 @@
+/* Motion. Short, linear-feeling, no bounce, no overshoot. Anything that loops (running spinners,
+   progress shimmer) is gated behind prefers-reduced-motion per the accessibility contract. */
+:root {
+  --dur-instant: 80ms;
+  --dur-fast: 120ms;
+  --dur-base: 160ms;
+  --dur-slow: 240ms;
+  --dur-panel: 280ms;
+  --ease-productive: cubic-bezier(0.2, 0, 0.38, 0.9);
+  --ease-entrance: cubic-bezier(0, 0, 0.38, 0.9);
+  --ease-exit: cubic-bezier(0.2, 0, 1, 0.9);
+  --ease-linear: linear;
+  --transition-control:
+    background-color var(--dur-fast) var(--ease-productive),
+    border-color var(--dur-fast) var(--ease-productive),
+    color var(--dur-fast) var(--ease-productive);
+  --transition-panel:
+    transform var(--dur-panel) var(--ease-productive),
+    opacity var(--dur-base) var(--ease-productive);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms;
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+    --dur-panel: 0ms;
+  }
+}

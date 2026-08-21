@@ -1,0 +1,59 @@
+/* Space. 4px base with two half-steps. Rows and controls are medium density: comfortable to scan
+   and to tap, still dense enough for evidence tables. */
+:root {
+  --space-0: 0;
+  --space-025: 2px;
+  --space-05: 4px;
+  --space-075: 6px;
+  --space-1: 8px;
+  --space-15: 12px;
+  --space-2: 16px;
+  --space-25: 20px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --space-10: 80px;
+
+  /* Control geometry. 44px is the WCAG 2.2 AA touch target and the default in forms and on
+     pointer-coarse surfaces; 40px is the toolbar default; 32px is permitted inside table rows
+     where padding preserves a 44px hit area. */
+  --control-touch: 44px;
+  --control-h-lg: 44px;
+  --control-h-md: 40px;
+  --control-h-sm: 32px;
+  --control-pad-x-lg: var(--space-2);
+  --control-pad-x-md: var(--space-15);
+  --control-pad-x-sm: var(--space-1);
+
+  /* Table density: 44px rows by default, 40px when a screen is genuinely dense. */
+  --row-h-compact: 40px;
+  --row-h-default: 44px;
+  --cell-pad-x: var(--space-2);
+  --cell-pad-y: var(--space-1);
+
+  /* Page frame. Mobile-first: every Viewer workflow completes at 320px. */
+  --page-min: 320px;
+  --page-pad-x-mobile: var(--space-2);
+  --page-pad-x-desktop: var(--space-4);
+  --page-max: 1440px;
+  --content-max: 1280px;
+  --prose-max: 68ch;
+  --nav-h: 64px;
+  --rail-w: 248px;
+  --rail-w-collapsed: 56px;
+  --bottombar-h: 56px;
+  --topbar-h: 64px;
+  --drawer-w: 420px;
+  --panel-w: 400px;
+  --avatar-sm: 24px;
+  --avatar-md: 32px;
+  --avatar-lg: 40px;
+
+  /* Stack rhythm */
+  --stack-tight: var(--space-1);
+  --stack: var(--space-2);
+  --stack-loose: var(--space-3);
+  --section-gap: var(--space-4);
+}

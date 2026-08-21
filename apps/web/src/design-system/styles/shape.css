@@ -1,0 +1,26 @@
+/* Shape. Soft radii (6/8/12/16) with hairline borders: surfaces read as cards on a light page.
+   Depth still comes from the border first, with one very quiet card shadow behind it. */
+:root {
+  --radius-none: 0;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  --border-w: 1px;
+  --border-w-strong: 2px;
+  --border-w-accent: 3px;
+
+  --border-hairline: 1px solid var(--gray-50);
+  --border-default: 1px solid var(--gray-100);
+  --border-strong: 1px solid var(--gray-200);
+  --border-ink: 1px solid var(--ink);
+  --border-accent: 1px solid var(--blue-500);
+  --border-dashed: 1px dashed var(--gray-300);
+
+  --focus-ring-w: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--blue-500);
+  --focus-ring: var(--focus-ring-w) solid var(--focus-ring-color);
+}

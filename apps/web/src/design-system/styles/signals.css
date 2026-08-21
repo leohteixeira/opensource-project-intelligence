@@ -1,0 +1,54 @@
+/* Status signal palette. One hue per meaning, frozen by the UI/UX contract's signal and state
+   mapping. Colour is never the only cue: every signal also carries text and a glyph. Each family
+   gives a readable foreground on white (>= 4.5:1), a tinted surface, and a border for flat chips. */
+:root {
+  /* satisfied deterministic condition / ready / succeeded / recommended */
+  --positive-fg: #14713c;
+  --positive-bg: #e7f4ec;
+  --positive-border: #a8d5ba;
+  --positive-solid: #1b8a4a;
+
+  /* condition requiring attention / conditional / stale */
+  --attention-fg: #8a5a05;
+  --attention-bg: #fdf3e0;
+  --attention-border: #efcf95;
+  --attention-solid: #b87503;
+
+  /* verified failure / not_recommended / failed */
+  --critical-fg: #a61f1a;
+  --critical-bg: #fcedeb;
+  --critical-border: #f0b8b3;
+  --critical-solid: #c42b23;
+
+  /* informational / running / observed trend. Steel blue — duller than the action blue on purpose,
+     so a status is never mistaken for something to click. */
+  --info-fg: #245c86;
+  --info-bg: #ebf2f8;
+  --info-border: #b5cbdc;
+  --info-solid: #2e7bae;
+
+  /* queued / pending — deliberately duller than running */
+  --pending-fg: #4a5b70;
+  --pending-bg: #edf0f4;
+  --pending-border: #c4cdd9;
+
+  /* unknown / not_applicable / insufficient_data */
+  --unknown-fg: #5a6474;
+  --unknown-bg: #f1f3f6;
+  --unknown-border: #cdd2db;
+
+  /* forecast / early warning / AI-generated */
+  --forecast-fg: #5b41b8;
+  --forecast-bg: #eeeafa;
+  --forecast-border: #c6baee;
+  --forecast-solid: #6b4fd0;
+
+  /* Chart series. Ordinal, hue-separated, and never reused for status meaning. */
+  --series-1: #1c222b;
+  --series-2: #2e7bae;
+  --series-3: #0e7c7b;
+  --series-4: #8a6212;
+  --series-5: #8c3e7a;
+  --series-grid: #e7eaf0;
+  --series-forecast: #6b4fd0;
+}

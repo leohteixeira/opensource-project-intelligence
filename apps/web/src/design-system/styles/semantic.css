@@ -1,0 +1,85 @@
+/* Semantic aliases. Product code and screens reference these, not the base ramps. */
+:root {
+  /* Surfaces */
+  --surface-page: var(--gray-25);
+  --surface-card: var(--white);
+  --surface-sunken: var(--gray-50);
+  --surface-rail: var(--white);
+  --surface-nav: var(--white);
+  --surface-overlay: var(--white);
+  --surface-code: var(--gray-50);
+  --surface-table-head: var(--white);
+  --surface-row-hover: var(--gray-25);
+  --surface-row-selected: var(--blue-50);
+  --surface-disabled: var(--gray-50);
+  --surface-brand: var(--blue-500);
+  --surface-brand-soft: var(--blue-50);
+  --surface-inverse: var(--gray-900);
+
+  /* Text */
+  --text-primary: var(--gray-900);
+  --text-body: var(--gray-800);
+  --text-secondary: var(--gray-500);
+  --text-tertiary: var(--gray-400);
+  --text-inverse: var(--white);
+  --text-link: var(--blue-600);
+  --text-link-hover: var(--blue-700);
+  --text-disabled: var(--gray-300);
+  --text-code: var(--gray-700);
+  --text-brand: var(--blue-600);
+  --text-danger: var(--critical-fg);
+
+  /* Borders */
+  --border-subtle: var(--gray-100);
+  --border-card: var(--gray-100);
+  --border-field: var(--gray-200);
+  --border-field-hover: var(--gray-300);
+  --border-field-focus: var(--blue-500);
+  --border-divider: var(--gray-100);
+  --border-table: var(--gray-50);
+  --border-danger: var(--critical-border);
+
+  /* Primary action */
+  --action-primary-bg: var(--blue-500);
+  --action-primary-bg-hover: var(--blue-600);
+  --action-primary-bg-active: var(--blue-700);
+  --action-accent-soft-bg: var(--blue-50);
+  --action-accent-soft-fg: var(--blue-600);
+  --action-primary-fg: var(--white);
+  --action-secondary-bg: var(--white);
+  --action-secondary-bg-hover: var(--gray-50);
+  --action-secondary-bg-active: var(--gray-100);
+  --action-secondary-fg: var(--gray-800);
+  --action-secondary-border: var(--gray-200);
+  --action-ghost-bg-hover: var(--gray-50);
+  --action-ghost-fg: var(--gray-700);
+  --action-danger-bg: var(--critical-solid);
+  --action-danger-bg-hover: #a61f1a;
+  --action-danger-fg: var(--white);
+  --action-disabled-bg: var(--gray-100);
+  --action-disabled-fg: var(--gray-400);
+
+  /* Evidence and provenance */
+  --evidence-fg: var(--blue-600);
+  --evidence-underline: var(--info-border);
+  --provenance-fg: var(--text-secondary);
+  --coverage-full: var(--positive-solid);
+  --coverage-partial: var(--attention-solid);
+  --coverage-none: var(--gray-200);
+  --ai-fg: var(--forecast-fg);
+  --ai-bg: var(--forecast-bg);
+  --ai-border: var(--forecast-border);
+
+  /* Health dimensions — ordinal identity only, never a verdict colour. All seven use the same
+     neutral chip; status comes from the signal tokens plus text. */
+  --dimension-fg: var(--gray-700);
+  --dimension-bg: var(--gray-50);
+  --dimension-border: var(--gray-200);
+
+  /* Radar rings */
+  --ring-adopt: var(--positive-fg);
+  --ring-trial: var(--info-fg);
+  --ring-assess: var(--attention-fg);
+  --ring-hold: var(--critical-fg);
+  --ring-unplaced: var(--unknown-fg);
+}

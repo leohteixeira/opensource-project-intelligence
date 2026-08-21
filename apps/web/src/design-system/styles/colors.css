@@ -1,0 +1,48 @@
+/* Base palette. Soft near-neutral ramp — white cards on a light page, hairline borders — plus one
+   saturated action blue. Signal hues live in signals.css; role aliases live in semantic.css. */
+:root {
+  --white: #ffffff;
+  --gray-25: #f7f8fa;
+  --gray-50: #f1f3f7;
+  --gray-100: #e7eaf0;
+  --gray-200: #d6dbe4;
+  --gray-300: #aeb6c2;
+  --gray-400: #7c8797;
+  --gray-500: #5a6474;
+  --gray-600: #414a58;
+  --gray-700: #2c333e;
+  --gray-800: #1c222b;
+  --gray-900: #10151b;
+
+  /* Action blue — the primary action colour and the brand hue. Saturated on purpose: the
+     informational signal blue is deliberately duller and steelier, so an action never reads as a
+     status and a status never reads as clickable. */
+  --blue-25: #f5f8ff;
+  --blue-50: #eaf1fe;
+  --blue-100: #d5e2fc;
+  --blue-300: #7fa5f3;
+  --blue-500: #2b62e0;
+  --blue-600: #1f4cbd;
+  --blue-700: #173a93;
+
+  /* Ink — text, inverse surfaces and the first chart series. No longer the primary action. */
+  --ink: #1c222b;
+  --ink-hover: #2c333e;
+  --ink-active: #10151b;
+
+  /* Bronze — retired from the interface. Kept only so print and public-surface accents have a warm
+     option; the wordmark and every action now use the action blue. */
+  --bronze-50: #f7f1dd;
+  --bronze-100: #eadca6;
+  --bronze-300: #c29a2e;
+  --bronze-500: #8a6212;
+  --bronze-600: #6b4b0c;
+  --bronze-700: #4a340a;
+
+  /* Alpha utilities for overlays and skeletons. */
+  --alpha-ink-04: rgba(16, 21, 27, 0.04);
+  --alpha-ink-08: rgba(16, 21, 27, 0.08);
+  --alpha-ink-16: rgba(16, 21, 27, 0.16);
+  --alpha-ink-56: rgba(16, 21, 27, 0.56);
+  --alpha-white-72: rgba(255, 255, 255, 0.72);
+}

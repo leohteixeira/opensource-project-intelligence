@@ -1,0 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,300..800;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+/* SUBSTITUTED WEBFONTS — no font binaries were supplied with the source specifications.
+   Libre Franklin (UI/display) and IBM Plex Mono (evidence/identifiers/formulas) are loaded from
+   Google Fonts. Both cover Latin Extended, so Brazilian Portuguese diacritics render correctly, and
+   both ship tabular figures for evidence tables. Swap in the real brand faces when they exist:
+   replace this @import with self-hosted @font-face rules and keep the family tokens unchanged. */
