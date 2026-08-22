@@ -6,6 +6,8 @@ import {
   getApiV1CatalogProjects,
   getApiV1CatalogProjectsProjectId,
   getApiV1Session,
+  patchApiV1AdminMembersMemberId,
+  patchApiV1AdminServiceAccountsServiceAccountId,
   patchApiV1MePreferences,
   postApiV1AdminMembersMemberIdApproval,
   postApiV1AdminServiceAccounts,
@@ -133,7 +135,6 @@ export async function createServiceAccount(
   session: SessionDocument,
   account: {
     name: string;
-    issuer: string;
     external_subject: string;
     role: 'viewer' | 'analyst';
     scopes: string[];
@@ -143,6 +144,39 @@ export async function createServiceAccount(
     await postApiV1AdminServiceAccounts({
       body: account,
       headers: mutationHeaders(session, true),
+    }),
+  );
+}
+
+export async function updateMember(
+  session: SessionDocument,
+  memberId: string,
+  version: number,
+  role: 'viewer' | 'analyst' | 'admin',
+  state: 'active' | 'suspended',
+): Promise<Document> {
+  return unwrap<Document>(
+    await patchApiV1AdminMembersMemberId({
+      path: { member_id: memberId },
+      body: { role, state },
+      headers: mutationHeaders(session, false, version),
+    }),
+  );
+}
+
+export async function updateServiceAccount(
+  session: SessionDocument,
+  accountId: string,
+  version: number,
+  role: 'viewer' | 'analyst',
+  state: 'active' | 'suspended',
+  scopes: string[],
+): Promise<Document> {
+  return unwrap<Document>(
+    await patchApiV1AdminServiceAccountsServiceAccountId({
+      path: { service_account_id: accountId },
+      body: { role, state, scopes },
+      headers: mutationHeaders(session, false, version),
     }),
   );
 }

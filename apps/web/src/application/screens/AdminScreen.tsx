@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -8,18 +8,23 @@ import {
   DefinitionList,
   EmptyState,
   Panel,
+  Select,
   StatusBadge,
   Table,
+  TextField,
   type StatusKey,
   type TableColumn,
 } from '../../design-system';
 import {
   approveMember,
+  createServiceAccount,
   fetchAudit,
   fetchMembers,
   fetchOperations,
   fetchServiceAccounts,
   type Document,
+  updateMember,
+  updateServiceAccount,
 } from '../api';
 import { queryClient } from '../query';
 import { useApplication } from '../router';
@@ -68,10 +73,16 @@ function MembersScreen() {
                 {t('reject')}
               </Button>
             </span>
-          ) : null,
+          ) : (
+            <MemberUpdateActions
+              row={row}
+              session={session}
+              onComplete={() => void queryClient.invalidateQueries({ queryKey: ['admin-members'] })}
+            />
+          ),
       },
     ],
-    [decide, t],
+    [decide, session, t],
   );
   return (
     <AdminTablePage
@@ -89,10 +100,31 @@ function MembersScreen() {
 
 function ServiceAccountsScreen() {
   const { t } = useTranslation();
-  const { narrow } = useApplication();
+  const { narrow, session } = useApplication();
+  const [name, setName] = useState('');
+  const [subject, setSubject] = useState('');
+  const [role, setRole] = useState<'viewer' | 'analyst'>('viewer');
+  const [scopes, setScopes] = useState('projects:read');
   const accounts = useQuery({
     queryKey: ['admin-service-accounts'],
     queryFn: fetchServiceAccounts,
+  });
+  const create = useMutation({
+    mutationFn: () =>
+      createServiceAccount(session, {
+        name,
+        external_subject: subject,
+        role,
+        scopes: scopes
+          .split(',')
+          .map((scope) => scope.trim())
+          .filter(Boolean),
+      }),
+    onSuccess: () => {
+      setName('');
+      setSubject('');
+      void queryClient.invalidateQueries({ queryKey: ['admin-service-accounts'] });
+    },
   });
   const columns: readonly TableColumn<Document>[] = [
     { key: 'name', header: t('name') },
@@ -104,12 +136,70 @@ function ServiceAccountsScreen() {
       render: (row) => arrayValue(row.scopes).join(', ') || '—',
     },
     { key: 'status', header: t('state'), render: statusCell },
+    {
+      key: 'action',
+      header: t('action'),
+      render: (row) => (
+        <ServiceAccountActions
+          row={row}
+          session={session}
+          onComplete={() =>
+            void queryClient.invalidateQueries({ queryKey: ['admin-service-accounts'] })
+          }
+        />
+      ),
+    },
   ];
   return (
     <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
       <Banner tone="neutral" title={t('serviceAccounts')}>
         {t('serviceAccountHelp')}
       </Banner>
+      <Panel title={t('create')}>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            create.mutate();
+          }}
+          style={{ display: 'grid', gap: 'var(--space-1)' }}
+        >
+          <TextField
+            id="service-name"
+            label={t('name')}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            required
+          />
+          <TextField
+            id="service-subject"
+            label={t('externalSubject')}
+            value={subject}
+            onChange={(event) => setSubject(event.target.value)}
+            required
+          />
+          <Select
+            id="service-role"
+            label={t('role')}
+            value={role}
+            onChange={(event) => setRole(event.target.value as 'viewer' | 'analyst')}
+            options={[
+              { value: 'viewer', label: 'Viewer' },
+              { value: 'analyst', label: 'Analyst' },
+            ]}
+          />
+          <TextField
+            id="service-scopes"
+            label={t('scopesHint')}
+            value={scopes}
+            onChange={(event) => setScopes(event.target.value)}
+            required
+          />
+          {create.isError ? <Banner tone="critical" title={t('requestFailed')} /> : null}
+          <Button type="submit" pending={create.isPending}>
+            {t('create')}
+          </Button>
+        </form>
+      </Panel>
       <AdminTablePage
         title={t('serviceAccounts')}
         rows={accounts.data?.items ?? []}
@@ -120,6 +210,98 @@ function ServiceAccountsScreen() {
         retry={() => void accounts.refetch()}
       />
     </div>
+  );
+}
+
+function MemberUpdateActions({
+  row,
+  session,
+  onComplete,
+}: {
+  row: Document;
+  session: Parameters<typeof updateMember>[0];
+  onComplete: () => void;
+}) {
+  const { t } = useTranslation();
+  const [role, setRole] = useState<'viewer' | 'analyst' | 'admin'>(() => {
+    const current = stringValue(row.role);
+    return current === 'analyst' || current === 'admin' ? current : 'viewer';
+  });
+  const [state, setState] = useState<'active' | 'suspended'>(() =>
+    stringValue(row.status) === 'suspended' ? 'suspended' : 'active',
+  );
+  const update = useMutation({
+    mutationFn: () =>
+      updateMember(session, stringValue(row.id), numberValue(row.version), role, state),
+    onSuccess: onComplete,
+  });
+  return (
+    <span style={{ display: 'flex', gap: 'var(--space-05)', flexWrap: 'wrap', alignItems: 'end' }}>
+      <Select
+        id={`member-role-${stringValue(row.id)}`}
+        placeholder={t('role')}
+        value={role}
+        onChange={(event) => setRole(event.target.value as typeof role)}
+        options={[
+          { value: 'viewer', label: 'Viewer' },
+          { value: 'analyst', label: 'Analyst' },
+          { value: 'admin', label: 'Admin' },
+        ]}
+      />
+      <Select
+        id={`member-state-${stringValue(row.id)}`}
+        placeholder={t('state')}
+        value={state}
+        onChange={(event) => setState(event.target.value as typeof state)}
+        options={[
+          { value: 'active', label: t('activate') },
+          { value: 'suspended', label: t('suspend') },
+        ]}
+      />
+      <Button
+        size="sm"
+        variant="secondary"
+        pending={update.isPending}
+        onClick={() => update.mutate()}
+      >
+        {t('update')}
+      </Button>
+    </span>
+  );
+}
+
+function ServiceAccountActions({
+  row,
+  session,
+  onComplete,
+}: {
+  row: Document;
+  session: Parameters<typeof updateServiceAccount>[0];
+  onComplete: () => void;
+}) {
+  const { t } = useTranslation();
+  const suspended = stringValue(row.status) === 'suspended';
+  const update = useMutation({
+    mutationFn: () =>
+      updateServiceAccount(
+        session,
+        stringValue(row.id),
+        numberValue(row.version),
+        stringValue(row.role) === 'analyst' ? 'analyst' : 'viewer',
+        suspended ? 'active' : 'suspended',
+        arrayValue(row.scopes),
+      ),
+    onSuccess: onComplete,
+  });
+  return (
+    <Button
+      size="sm"
+      variant="secondary"
+      pending={update.isPending}
+      onClick={() => update.mutate()}
+    >
+      {suspended ? t('activate') : t('suspend')}
+    </Button>
   );
 }
 
@@ -252,6 +434,10 @@ function statusCell(row: Document) {
 
 function stringValue(value: unknown): string {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+}
+
+function numberValue(value: unknown): number {
+  return typeof value === 'number' ? value : Number(value) || 0;
 }
 
 function arrayValue(value: unknown): string[] {

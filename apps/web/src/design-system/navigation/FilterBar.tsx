@@ -18,6 +18,8 @@ export interface FilterBarProps {
   readonly onClear?: () => void;
   readonly onRemove?: (key: string) => void;
   readonly resultLabel?: ReactNode;
+  readonly clearLabel?: string;
+  readonly removeLabel?: (filter: AppliedFilter) => string;
   readonly style?: CSSProperties;
 }
 
@@ -27,6 +29,8 @@ export function FilterBar({
   onClear,
   onRemove,
   resultLabel,
+  clearLabel = 'Clear all',
+  removeLabel = (filter) => `Remove filter ${filter.field} ${filter.value}`,
   style,
 }: FilterBarProps) {
   return (
@@ -77,7 +81,7 @@ export function FilterBar({
               <button
                 type="button"
                 onClick={() => onRemove?.(filter.key)}
-                aria-label={`Remove filter ${filter.field} ${filter.value}`}
+                aria-label={removeLabel(filter)}
                 style={{
                   display: 'inline-flex',
                   border: 0,
@@ -106,7 +110,7 @@ export function FilterBar({
                 textDecoration: 'underline',
               }}
             >
-              Clear all
+              {clearLabel}
             </button>
           ) : null}
         </div>

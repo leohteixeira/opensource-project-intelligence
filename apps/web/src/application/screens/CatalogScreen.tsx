@@ -75,6 +75,8 @@ export function CatalogScreen() {
 
       <FilterBar
         applied={query ? [{ key: 'q', field: t('search'), value: query }] : []}
+        clearLabel={t('clearAll')}
+        removeLabel={(filter) => t('removeFilter', { field: filter.field, value: filter.value })}
         onClear={() => {
           setDraft('');
           setParams({});
@@ -160,6 +162,12 @@ export function CatalogScreen() {
           hasMore={projects.data.has_more}
           pageSize={24}
           label={t('catalog')}
+          previousLabel={t('previousPage')}
+          nextLabel={t('nextPage')}
+          pageLabel={t('page')}
+          ofLabel={t('of')}
+          perPageLabel={t('perPage')}
+          paginationLabel={t('pagination')}
           onPrev={goPrevious}
           onNext={goNext}
         />
