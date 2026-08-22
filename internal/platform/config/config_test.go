@@ -116,3 +116,29 @@ func TestLoadReportsEveryProblemAtOnce(t *testing.T) {
 		}
 	}
 }
+
+func TestUT269LoadRedactsConditionalConfiguration(t *testing.T) {
+	t.Parallel()
+
+	const secret = "do-not-report-this-secret"
+	_, err := config.Load("api", lookupFrom(map[string]string{
+		"DATABASE_URL":           "postgres://user:" + secret + "@localhost:5433/db",
+		"JETSTREAM_ENABLED":      "true",
+		"OBJECT_STORAGE_ENABLED": "true",
+		"S3_ACCESS_KEY":          "access-key",
+		"S3_SECRET_KEY":          secret,
+		"VALKEY_ENABLED":         "true",
+	}))
+	if err == nil {
+		t.Fatal("Load() returned no error, want conditional validation failures")
+	}
+
+	for _, field := range []string{"NATS_URL", "S3_ENDPOINT", "S3_BUCKET", "VALKEY_URL"} {
+		if !strings.Contains(err.Error(), field) {
+			t.Errorf("Load() error = %q, want safe field %q", err, field)
+		}
+	}
+	if strings.Contains(err.Error(), secret) || strings.Contains(err.Error(), "access-key") {
+		t.Fatalf("Load() error exposed a configuration value: %q", err)
+	}
+}
