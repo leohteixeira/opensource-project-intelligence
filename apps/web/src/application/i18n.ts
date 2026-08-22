@@ -5,7 +5,7 @@ import { initReactI18next } from 'react-i18next';
 export const supportedLocales = ['en', 'pt-BR'] as const;
 export type Locale = (typeof supportedLocales)[number];
 
-const en = {
+export const en = {
   skip: 'Skip to content',
   primaryNavigation: 'Primary navigation',
   catalog: 'Public catalog',
@@ -92,7 +92,7 @@ const en = {
   localePortuguese: 'Português (Brasil)',
 };
 
-const ptBR: Record<keyof typeof en, string> = {
+export const ptBR: Record<keyof typeof en, string> = {
   skip: 'Pular para o conteúdo',
   primaryNavigation: 'Navegação principal',
   catalog: 'Catálogo público',

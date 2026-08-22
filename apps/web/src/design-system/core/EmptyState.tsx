@@ -38,7 +38,7 @@ export function EmptyState({
       }}
     >
       <Icon name={glyph} size={20} style={{ color: 'var(--text-tertiary)' }} />
-      <p style={{ font: 'var(--type-subsection)', color: 'var(--text-primary)' }}>{title}</p>
+      <h2 style={{ font: 'var(--type-subsection)', color: 'var(--text-primary)' }}>{title}</h2>
       {children ? (
         <div
           style={{
