@@ -347,7 +347,10 @@ function OperationsScreen() {
     );
   }
   const health = recordValue(operations.data?.health);
-  const capabilities = recordValue(operations.data?.capabilities);
+  const healthItems: Array<[string, unknown]> = Object.keys(health).length
+    ? Object.entries(health)
+    : [['status', operations.data?.status ?? 'unavailable']];
+  const capabilities = arrayRecordValue(operations.data?.capabilities);
   return (
     <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
       <h1 style={{ font: 'var(--type-page)' }}>{t('operations')}</h1>
@@ -356,7 +359,7 @@ function OperationsScreen() {
       </Banner>
       <Panel title={t('health')}>
         <DefinitionList
-          items={Object.entries(health).map(([label, value]) => ({
+          items={healthItems.map(([label, value]) => ({
             label,
             value: safeValue(value),
             mono: true,
@@ -365,9 +368,9 @@ function OperationsScreen() {
       </Panel>
       <Panel title={t('capabilities')}>
         <DefinitionList
-          items={Object.entries(capabilities).map(([label, value]) => ({
-            label,
-            value: value ? t('enabled') : t('disabled'),
+          items={capabilities.map((capability) => ({
+            label: stringValue(capability.name),
+            value: `${capability.configured ? t('enabled') : t('disabled')} · ${safeValue(capability.status)}`,
           }))}
         />
       </Panel>
@@ -450,6 +453,15 @@ function recordValue(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
+}
+
+function arrayRecordValue(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value)
+    ? value.filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === 'object' && !Array.isArray(item),
+      )
+    : [];
 }
 
 function safeValue(value: unknown): string {
