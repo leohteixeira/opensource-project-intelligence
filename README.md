@@ -13,16 +13,19 @@ The product specification lives at `/workspace/docs/opensource_project_intellige
 
 ## Stack
 
-| Layer       | Choice                                                         |
-| ----------- | -------------------------------------------------------------- |
-| API         | Go 1.26 with stdlib `net/http` and `http.ServeMux` (port 8100) |
-| Worker      | separate Go binary, same package base                          |
-| Persistence | PostgreSQL 18 via `pgx/v5`, explicit SQL, no ORM               |
-| Migrations  | versioned SQL applied by `scripts/migrate.sh`                  |
-| Web         | React 19 + Vite 8 + TypeScript 5.9.3 (port 3100)               |
-| Interface   | vendored design system, tokens and four shells in `apps/web`   |
-| Telemetry   | OpenTelemetry Go 1.45 and `log/slog`                           |
-| Tests       | stdlib `testing`, table-driven, with the race detector         |
+| Layer        | Choice                                                                  |
+| ------------ | ----------------------------------------------------------------------- |
+| API          | Go 1.26 with strict generated `net/http` types (port 8100)              |
+| Worker       | separate Go binary, same package base                                   |
+| Persistence  | PostgreSQL 18/pgvector via `pgx/v5` and generated sqlc adapters         |
+| Delivery     | NATS JetStream from a PostgreSQL transactional outbox                   |
+| Evidence     | S3-compatible bytes owned by PostgreSQL object references               |
+| Acceleration | disposable Valkey caches, limits, and ephemeral fanout                  |
+| Migrations   | checksum-verified up/down SQL applied by `scripts/migrate.sh`           |
+| Web          | React 19 + Vite 8 + generated TypeScript client (port 3100)             |
+| Interface    | vendored design system, tokens and four shells in `apps/web`            |
+| Telemetry    | OpenTelemetry Go 1.45 and `log/slog`                                    |
+| Tests        | table-driven unit, race, generated-drift, and real-boundary integration |
 
 The decisions are recorded in [`specs/adrs/`](specs/adrs/).
 
@@ -37,14 +40,18 @@ internal/
 ├── release/ contributor/ metric/ comparison/ analysis/
 └── platform/
     ├── config/     # configuration from the environment
-    ├── database/   # pgx pool
+    ├── database/   # pgx pool, reviewed queries, and generated sqlc adapters
+    ├── health/     # required/optional dependency classification
+    ├── httpapi/    # generated strict OpenAPI server types
     ├── github/     # GitHub API adapter
     ├── httpx/      # server and JSON responses
+    ├── id/         # database-leased Snowflake identifiers
     ├── llm/        # model abstraction
     └── telemetry/  # OpenTelemetry
-migrations/      # versioned SQL
+migrations/      # checksum-verified up/down SQL
+api/             # reviewed OpenAPI 3.1 source and generator configuration
 apps/web/        # React frontend
-specs/adrs/      # architecture decisions
+specs/           # complete numbered product/technical contracts and ADRs
 ```
 
 The frontend carries the vendored design system (`src/design-system`) and the four shells
@@ -73,7 +80,9 @@ The example file is named `env.example`, without a leading dot, because the work
 make help          # lists the targets
 make build
 make test-race
-make check         # gofmt, go vet, race and build — the same thing CI runs
+make generate      # reproduce OpenAPI, sqlc, and TypeScript adapters
+make generate-check
+make check         # generated drift, gofmt, go vet, race and build — CI parity
 make run-api       # http://0.0.0.0:8100
 make run-worker
 
@@ -93,16 +102,16 @@ prevents `go test` from running the test binaries it compiles.
 
 ## Endpoints
 
-| Method | Route     | Description                                            |
-| ------ | --------- | ------------------------------------------------------ |
-| `GET`  | `/health` | Liveness. Touches no dependency at all.                |
-| `GET`  | `/ready`  | Readiness. Answers 503 when PostgreSQL does not reply. |
-| —      | `/api/v1` | Versioned contract surface, still empty.               |
+| Method | Route     | Description                                             |
+| ------ | --------- | ------------------------------------------------------- |
+| `GET`  | `/health` | Liveness. Touches no dependency at all.                 |
+| `GET`  | `/ready`  | Required dependency readiness and optional degradation. |
+| —      | `/api/v1` | Versioned surface defined in `api/openapi.yaml`.        |
 
 ## Ports
 
-Web 3100, API 8100, PostgreSQL 5433. This product uses no Valkey, no external broker and no object
-storage: they are explicitly out of the MVP scope.
+Web 3100, API 8100, PostgreSQL 5433. JetStream, Valkey, and S3-compatible storage remain internal to
+the repository-local Compose network and consume no additional host ports.
 
 ## Quality
 
