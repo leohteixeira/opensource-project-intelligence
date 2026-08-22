@@ -53,7 +53,7 @@ pre-commit:
     - name: eslint
       glob: 'apps/web/**/*.{ts,tsx}'
       root: apps/web/
-      run: pnpm exec eslint --fix --max-warnings 0 {staged_files}
+      run: pnpm exec eslint --fix --no-warn-ignored --max-warnings 0 {staged_files}
       stage_fixed: true
 
 commit-msg:
