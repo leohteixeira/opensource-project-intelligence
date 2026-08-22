@@ -51,6 +51,16 @@ services, and backup/restore reconciliation.
 - 2026-08-21: All six assigned unit cases passed. All six assigned integration cases passed against
   the real PostgreSQL 18/pgvector container, including migration round trip, generated vector scan,
   lease failover, readiness matrix, isolated drift failure, and database/object-manifest recovery.
+- 2026-08-22: Aligned the live health/readiness and Problem Details types with the frozen examples,
+  regenerated both clients and the strict Go server boundary, and added a guard that compares all
+  74 documented API operations and success statuses with OpenAPI.
+- 2026-08-22: Fresh final verification passed: checksum drift and regeneration, `git diff --check`,
+  Compose configuration and four-service health, Go vet/race/build, all Go unit packages, all six
+  assigned real-boundary integration cases with `-count=1`, frontend formatting/Markdown/typecheck/
+  lint, 68 frontend tests, and the production web build.
+- 2026-08-22: During the interrupted worker interval, another process created repository commit
+  `65b81e2`; this worker did not commit or rewrite history. The final regenerated outputs and task
+  tracking changes remain uncommitted.
 
 ## Follow-up boundaries
 

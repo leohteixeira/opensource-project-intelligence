@@ -21,7 +21,8 @@
 
 ## Workflow state
 
-- Task 01 is the active task and has no prerequisites.
+- Task 01 completed with fresh unit, race, build, frontend, generation-drift, Compose-health, and
+  PostgreSQL 18/pgvector integration evidence.
 - Later tasks depend on the published specifications, generated boundaries, base schema,
   infrastructure ownership, and verification commands delivered here.
 - The accepted workflow bundle under `.compozy/tasks/opensource-project-intelligence` remains the

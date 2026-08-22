@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Publish contracts and establish the generated platform foundation
 type: infra
 complexity: critical
