@@ -39,6 +39,23 @@ type Config struct {
 
 	// ServiceName identifies the process in traces and metrics.
 	ServiceName string
+
+	// JetStreamEnabled requires durable asynchronous delivery.
+	JetStreamEnabled bool
+
+	// NATSURL is the JetStream endpoint. It is never reported by readiness.
+	NATSURL string
+
+	// ObjectStorageEnabled requires S3-compatible evidence storage.
+	ObjectStorageEnabled bool
+	S3Endpoint           string
+	S3Bucket             string
+	S3AccessKey          string
+	S3SecretKey          string
+
+	// ValkeyEnabled enables disposable acceleration state.
+	ValkeyEnabled bool
+	ValkeyURL     string
 }
 
 // Load reads the configuration from lookup, which is normally os.LookupEnv.
@@ -60,6 +77,12 @@ func Load(serviceName string, lookup func(string) (string, bool)) (Config, error
 		ServiceName: serviceName,
 		OTLPEndpoint: strings.TrimSpace(
 			stringOrDefault(lookup, "OTEL_EXPORTER_OTLP_ENDPOINT", "")),
+		NATSURL:     strings.TrimSpace(stringOrDefault(lookup, "NATS_URL", "")),
+		S3Endpoint:  strings.TrimSpace(stringOrDefault(lookup, "S3_ENDPOINT", "")),
+		S3Bucket:    strings.TrimSpace(stringOrDefault(lookup, "S3_BUCKET", "")),
+		S3AccessKey: stringOrDefault(lookup, "S3_ACCESS_KEY", ""),
+		S3SecretKey: stringOrDefault(lookup, "S3_SECRET_KEY", ""),
+		ValkeyURL:   strings.TrimSpace(stringOrDefault(lookup, "VALKEY_URL", "")),
 	}
 
 	var err error
@@ -74,6 +97,38 @@ func Load(serviceName string, lookup func(string) (string, bool)) (Config, error
 		problems = append(problems, err.Error())
 	} else if cfg.WorkerConcurrency < 1 {
 		problems = append(problems, "WORKER_CONCURRENCY must be at least 1")
+	}
+	if cfg.JetStreamEnabled, err = boolOrDefault(lookup, "JETSTREAM_ENABLED", false); err != nil {
+		problems = append(problems, err.Error())
+	}
+	if cfg.ObjectStorageEnabled, err = boolOrDefault(lookup, "OBJECT_STORAGE_ENABLED", false); err != nil {
+		problems = append(problems, err.Error())
+	}
+	if cfg.ValkeyEnabled, err = boolOrDefault(lookup, "VALKEY_ENABLED", false); err != nil {
+		problems = append(problems, err.Error())
+	}
+
+	if cfg.JetStreamEnabled && cfg.NATSURL == "" {
+		problems = append(problems, "NATS_URL is required when JETSTREAM_ENABLED is true")
+	}
+	if cfg.ObjectStorageEnabled {
+		fields := []struct {
+			name  string
+			value string
+		}{
+			{"S3_ENDPOINT", cfg.S3Endpoint},
+			{"S3_BUCKET", cfg.S3Bucket},
+			{"S3_ACCESS_KEY", cfg.S3AccessKey},
+			{"S3_SECRET_KEY", cfg.S3SecretKey},
+		}
+		for _, field := range fields {
+			if strings.TrimSpace(field.value) == "" {
+				problems = append(problems, field.name+" is required when OBJECT_STORAGE_ENABLED is true")
+			}
+		}
+	}
+	if cfg.ValkeyEnabled && cfg.ValkeyURL == "" {
+		problems = append(problems, "VALKEY_URL is required when VALKEY_ENABLED is true")
 	}
 
 	if len(problems) > 0 {
@@ -132,5 +187,22 @@ func intOrDefault(lookup func(string) (string, bool), key string, fallback int) 
 		return 0, fmt.Errorf("%s must be an integer: %w", key, err)
 	}
 
+	return value, nil
+}
+
+func boolOrDefault(
+	lookup func(string) (string, bool),
+	key string,
+	fallback bool,
+) (bool, error) {
+	raw, ok := lookup(key)
+	if !ok || strings.TrimSpace(raw) == "" {
+		return fallback, nil
+	}
+
+	value, err := strconv.ParseBool(raw)
+	if err != nil {
+		return false, fmt.Errorf("%s must be true or false", key)
+	}
 	return value, nil
 }

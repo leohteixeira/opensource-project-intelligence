@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/config"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/database"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/health"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/httpx"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/telemetry"
 )
@@ -51,7 +53,7 @@ func run(logger *slog.Logger) error {
 	}
 	defer pool.Close()
 
-	server := httpx.NewServer(cfg.HTTPAddress, otelhttp.NewHandler(routes(logger, pool), "api"))
+	server := httpx.NewServer(cfg.HTTPAddress, otelhttp.NewHandler(routes(logger, pool, cfg), "api"))
 
 	serverErrors := make(chan error, 1)
 
@@ -80,12 +82,12 @@ func run(logger *slog.Logger) error {
 	)
 }
 
-func routes(logger *slog.Logger, pool *database.Pool) http.Handler {
+func routes(logger *slog.Logger, pool *database.Pool, cfg config.Config) http.Handler {
 	mux := http.NewServeMux()
 
 	// Liveness: the process is up. It never touches a dependency.
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
-		httpx.WriteJSON(w, logger, http.StatusOK, map[string]string{"status": "healthy"})
+		httpx.WriteJSON(w, logger, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
 	// Readiness: the process can serve traffic, which requires the database.
@@ -93,19 +95,37 @@ func routes(logger *slog.Logger, pool *database.Pool) http.Handler {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
 
-		if err := pool.Ping(ctx); err != nil {
-			logger.Warn("the database is not available", slog.Any("error", err))
-			httpx.WriteJSON(w, logger, http.StatusServiceUnavailable, map[string]string{
-				"status":   "not-ready",
-				"database": "unavailable",
+		dependencies := []health.Dependency{{
+			Name: "postgresql", Importance: health.Required, State: dependencyState(pool.Ping(ctx)),
+		}}
+		if cfg.JetStreamEnabled {
+			dependencies = append(dependencies, health.Dependency{
+				Name: "jetstream", Importance: health.Required, State: dependencyState(health.TCP(ctx, cfg.NATSURL)),
 			})
-			return
+		} else {
+			dependencies = append(dependencies, health.Dependency{Name: "jetstream", Importance: health.Optional, State: health.Disabled})
+		}
+		if cfg.ObjectStorageEnabled {
+			dependencies = append(dependencies, health.Dependency{
+				Name: "object_storage", Importance: health.Required, State: dependencyState(health.HTTP(ctx, s3HealthURL(cfg.S3Endpoint))),
+			})
+		} else {
+			dependencies = append(dependencies, health.Dependency{Name: "object_storage", Importance: health.Optional, State: health.Disabled})
+		}
+		if cfg.ValkeyEnabled {
+			dependencies = append(dependencies, health.Dependency{
+				Name: "valkey", Importance: health.Optional, State: dependencyState(health.TCP(ctx, cfg.ValkeyURL)),
+			})
+		} else {
+			dependencies = append(dependencies, health.Dependency{Name: "valkey", Importance: health.Optional, State: health.Disabled})
 		}
 
-		httpx.WriteJSON(w, logger, http.StatusOK, map[string]string{
-			"status":   "ready",
-			"database": "available",
-		})
+		report := health.Evaluate(dependencies)
+		status := http.StatusOK
+		if !report.Ready {
+			status = http.StatusServiceUnavailable
+		}
+		httpx.WriteJSON(w, logger, status, report)
 	})
 
 	// Versioned contract surface. Handlers are registered per capability as
@@ -117,4 +137,21 @@ func routes(logger *slog.Logger, pool *database.Pool) http.Handler {
 	})
 
 	return mux
+}
+
+func dependencyState(err error) health.State {
+	if err != nil {
+		return health.Unavailable
+	}
+	return health.Available
+}
+
+func s3HealthURL(endpoint string) string {
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
+		return endpoint
+	}
+	parsed.Path = "/minio/health/ready"
+	parsed.RawQuery = ""
+	return parsed.String()
 }
