@@ -17,7 +17,10 @@ coverage/
 
 # Tooling
 /.cache/
+/.tmp/
+/artifacts/
 /apps/web/playwright-report/
 /apps/web/test-results/
+/.compozy/tasks/**/logs/
 .DS_Store
 *.log
