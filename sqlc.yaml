@@ -1,0 +1,19 @@
+version: '2'
+sql:
+  - engine: postgresql
+    schema: migrations/0001_platform.up.sql
+    queries: internal/platform/database/query
+    gen:
+      go:
+        package: dbgen
+        out: internal/platform/database/sqlc
+        sql_package: pgx/v5
+        emit_interface: true
+        emit_json_tags: true
+        emit_empty_slices: true
+        overrides:
+          - db_type: vector
+            go_type:
+              import: github.com/pgvector/pgvector-go
+              package: pgvector
+              type: Vector

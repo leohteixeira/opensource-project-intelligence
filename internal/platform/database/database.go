@@ -1,14 +1,16 @@
 // Package database owns the PostgreSQL connection pool.
 //
-// Data access uses explicit SQL. There is no ORM and no query generator: the
-// SQL that produces a metric has to stay readable and auditable.
+// Data access uses explicit reviewed SQL and generated sqlc adapters. There is
+// no ORM: the SQL that produces a metric stays readable and auditable.
 package database
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	pgxvector "github.com/pgvector/pgvector-go/pgx"
 )
 
 // Pool wraps the pgx connection pool so that callers depend on this package
@@ -22,7 +24,17 @@ type Pool struct {
 // The connection URI is never included in an error message, because it carries
 // credentials.
 func Open(ctx context.Context, databaseURL string) (*Pool, error) {
-	pool, err := pgxpool.New(ctx, databaseURL)
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("database: cannot parse the connection configuration: %w", redact(err))
+	}
+	poolConfig.AfterConnect = func(ctx context.Context, connection *pgx.Conn) error {
+		if err := pgxvector.RegisterTypes(ctx, connection); err != nil {
+			return fmt.Errorf("register pgvector types: %w", err)
+		}
+		return nil
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("database: cannot create the connection pool: %w", redact(err))
 	}

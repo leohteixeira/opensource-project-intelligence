@@ -1,0 +1,2095 @@
+openapi: 3.1.0
+info:
+  title: Open Source Project Intelligence API
+  version: 1.0.0
+  description: Repository-owned frozen HTTP contract. Resource IDs are opaque decimal strings.
+servers:
+  - url: http://localhost:8100
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [contract]
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        default:
+          $ref: '#/components/responses/Problem'
+  /ready:
+    get:
+      operationId: getReady
+      tags: [contract]
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/catalog/projects:
+    get:
+      operationId: getApiV1CatalogProjects
+      tags: [contract]
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/catalog/projects/{project_id}:
+    get:
+      operationId: getApiV1CatalogProjectsProjectId
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/session:
+    get:
+      operationId: getApiV1Session
+      tags: [contract]
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/session/logout:
+    post:
+      operationId: postApiV1SessionLogout
+      tags: [contract]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '204':
+          description: Completed without a response body
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/me/preferences:
+    patch:
+      operationId: patchApiV1MePreferences
+      tags: [contract]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/me/deletion:
+    post:
+      operationId: postApiV1MeDeletion
+      tags: [contract]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/admin/members:
+    get:
+      operationId: getApiV1AdminMembers
+      tags: [contract]
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/admin/members/{member_id}/approval:
+    post:
+      operationId: postApiV1AdminMembersMemberIdApproval
+      tags: [contract]
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/admin/members/{member_id}:
+    patch:
+      operationId: patchApiV1AdminMembersMemberId
+      tags: [contract]
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/admin/service-accounts:
+    get:
+      operationId: getApiV1AdminServiceAccounts
+      tags: [contract]
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: postApiV1AdminServiceAccounts
+      tags: [contract]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/admin/service-accounts/{service_account_id}:
+    patch:
+      operationId: patchApiV1AdminServiceAccountsServiceAccountId
+      tags: [contract]
+      parameters:
+        - name: service_account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/admin/audit:
+    get:
+      operationId: getApiV1AdminAudit
+      tags: [contract]
+      parameters:
+        - name: actor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: resource
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/admin/operations:
+    get:
+      operationId: getApiV1AdminOperations
+      tags: [contract]
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/portfolio:
+    get:
+      operationId: getApiV1Portfolio
+      tags: [contract]
+      parameters:
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cutoff
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects:
+    get:
+      operationId: getApiV1Projects
+      tags: [contract]
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: postApiV1Projects
+      tags: [contract]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}:
+    get:
+      operationId: getApiV1ProjectsProjectId
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      operationId: patchApiV1ProjectsProjectId
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/transition:
+    post:
+      operationId: postApiV1ProjectsProjectIdTransition
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/deletion:
+    post:
+      operationId: postApiV1ProjectsProjectIdDeletion
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/repositories:
+    get:
+      operationId: getApiV1ProjectsProjectIdRepositories
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: postApiV1ProjectsProjectIdRepositories
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/repositories/{repository_id}:
+    patch:
+      operationId: patchApiV1ProjectsProjectIdRepositoriesRepositoryId
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: repository_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteApiV1ProjectsProjectIdRepositoriesRepositoryId
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: repository_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '204':
+          description: Completed without a response body
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/sources:
+    get:
+      operationId: getApiV1ProjectsProjectIdSources
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: postApiV1ProjectsProjectIdSources
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/sources/{source_id}:
+    patch:
+      operationId: patchApiV1ProjectsProjectIdSourcesSourceId
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: source_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteApiV1ProjectsProjectIdSourcesSourceId
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: source_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '202':
+          description: Completed without a response body
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/associations:
+    get:
+      operationId: getApiV1ProjectsProjectIdAssociations
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/associations/{association_id}/correction:
+    post:
+      operationId: postApiV1ProjectsProjectIdAssociationsAssociationIdCorrection
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: association_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/syncs:
+    post:
+      operationId: postApiV1ProjectsProjectIdSyncs
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/history-requests:
+    post:
+      operationId: postApiV1ProjectsProjectIdHistoryRequests
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/jobs:
+    get:
+      operationId: getApiV1ProjectsProjectIdJobs
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/jobs/{job_id}:
+    get:
+      operationId: getApiV1JobsJobId
+      tags: [contract]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/jobs/{job_id}/events:
+    get:
+      operationId: getApiV1JobsJobIdEvents
+      tags: [contract]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/jobs/{job_id}/cancellation:
+    post:
+      operationId: postApiV1JobsJobIdCancellation
+      tags: [contract]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/metrics:
+    get:
+      operationId: getApiV1ProjectsProjectIdMetrics
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: dimension
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cutoff
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/metrics/{metric_name}:
+    get:
+      operationId: getApiV1ProjectsProjectIdMetricsMetricName
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: metric_name
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cutoff
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/health:
+    get:
+      operationId: getApiV1ProjectsProjectIdHealth
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cutoff
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/contributors:
+    get:
+      operationId: getApiV1ProjectsProjectIdContributors
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/adoption:
+    get:
+      operationId: getApiV1ProjectsProjectIdAdoption
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/security:
+    get:
+      operationId: getApiV1ProjectsProjectIdSecurity
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/comparisons:
+    post:
+      operationId: postApiV1Comparisons
+      tags: [contract]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/comparisons/{comparison_id}:
+    get:
+      operationId: getApiV1ComparisonsComparisonId
+      tags: [contract]
+      parameters:
+        - name: comparison_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/trends:
+    get:
+      operationId: getApiV1ProjectsProjectIdTrends
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/recommendation:
+    get:
+      operationId: getApiV1ProjectsProjectIdRecommendation
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: policy
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cutoff
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/policies:
+    get:
+      operationId: getApiV1Policies
+      tags: [contract]
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: postApiV1Policies
+      tags: [contract]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/policies/{policy_id}/versions/{version}:
+    get:
+      operationId: getApiV1PoliciesPolicyIdVersionsVersion
+      tags: [contract]
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/policies/{policy_id}/versions:
+    post:
+      operationId: postApiV1PoliciesPolicyIdVersions
+      tags: [contract]
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/policies/{policy_id}/versions/{version}/activation:
+    post:
+      operationId: postApiV1PoliciesPolicyIdVersionsVersionActivation
+      tags: [contract]
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/radar:
+    get:
+      operationId: getApiV1Radar
+      tags: [contract]
+      parameters:
+        - name: policy
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/radar/{project_id}/override:
+    post:
+      operationId: postApiV1RadarProjectIdOverride
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteApiV1RadarProjectIdOverride
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '204':
+          description: Completed without a response body
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/topics:
+    get:
+      operationId: getApiV1ProjectsProjectIdTopics
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/topics/{topic_id}/corrections:
+    post:
+      operationId: postApiV1ProjectsProjectIdTopicsTopicIdCorrections
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: topic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/releases:
+    get:
+      operationId: getApiV1ProjectsProjectIdReleases
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/releases/{release_id}:
+    get:
+      operationId: getApiV1ProjectsProjectIdReleasesReleaseId
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+        - name: release_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/crawls:
+    post:
+      operationId: postApiV1ProjectsProjectIdCrawls
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/knowledge/search:
+    post:
+      operationId: postApiV1ProjectsProjectIdKnowledgeSearch
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/projects/{project_id}/queries:
+    post:
+      operationId: postApiV1ProjectsProjectIdQueries
+      tags: [contract]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/analysis-runs/{run_id}:
+    get:
+      operationId: getApiV1AnalysisRunsRunId
+      tags: [contract]
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/analysis-runs/{run_id}/reruns:
+    post:
+      operationId: postApiV1AnalysisRunsRunIdReruns
+      tags: [contract]
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/analysis-runs/{run_id}/feedback:
+    post:
+      operationId: postApiV1AnalysisRunsRunIdFeedback
+      tags: [contract]
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/analysis-series/{series_id}/selection:
+    post:
+      operationId: postApiV1AnalysisSeriesSeriesIdSelection
+      tags: [contract]
+      parameters:
+        - name: series_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/alerts:
+    get:
+      operationId: getApiV1Alerts
+      tags: [contract]
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: project
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/alert-rules:
+    post:
+      operationId: postApiV1AlertRules
+      tags: [contract]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/alert-rules/{rule_id}:
+    patch:
+      operationId: patchApiV1AlertRulesRuleId
+      tags: [contract]
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/alerts/{alert_id}/read:
+    post:
+      operationId: postApiV1AlertsAlertIdRead
+      tags: [contract]
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '204':
+          description: Completed without a response body
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/alerts/{alert_id}/transition:
+    post:
+      operationId: postApiV1AlertsAlertIdTransition
+      tags: [contract]
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/exports:
+    post:
+      operationId: postApiV1Exports
+      tags: [contract]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '202':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/exports/{export_id}:
+    get:
+      operationId: getApiV1ExportsExportId
+      tags: [contract]
+      parameters:
+        - name: export_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/exports/{export_id}/download:
+    get:
+      operationId: getApiV1ExportsExportIdDownload
+      tags: [contract]
+      parameters:
+        - name: export_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: Successful contract response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        default:
+          $ref: '#/components/responses/Problem'
+components:
+  schemas:
+    ResourceID:
+      type: string
+      pattern: '^[0-9]+$'
+      examples: ['732684512931872768']
+    Document:
+      type: object
+      additionalProperties: true
+    DependencyState:
+      type: string
+      enum: [available, unavailable, degraded, disabled]
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+    Readiness:
+      type: object
+      additionalProperties: false
+      required: [status, dependencies]
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        dependencies:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DependencyState'
+    FieldError:
+      type: object
+      additionalProperties: false
+      required: [field, code]
+      properties:
+        field: { type: string }
+        code: { type: string, pattern: '^[a-z][a-z0-9_]*$' }
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, request_id]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        code: { type: string, pattern: '^[a-z][a-z0-9_]*$' }
+        instance: { type: string }
+        request_id: { type: string }
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+  responses:
+    Problem:
+      description: A safe RFC 9457 problem response
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
