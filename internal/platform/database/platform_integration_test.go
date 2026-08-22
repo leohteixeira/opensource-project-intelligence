@@ -57,9 +57,18 @@ func TestPlatformDatabaseIntegrationContract(t *testing.T) {
 		); err == nil {
 			t.Fatal("jobs positive-identifier constraint accepted zero")
 		}
+		var migrationCount int
+		if err := connection.QueryRow(ctx, "SELECT count(*) FROM schema_migrations").Scan(&migrationCount); err != nil {
+			t.Fatalf("count applied migrations: %v", err)
+		}
+		if migrationCount == 0 {
+			t.Fatal("migration runner applied no migrations")
+		}
 		connection.Close(ctx)
 
-		runMigration(t, root, sourceDatabase, "down")
+		for range migrationCount {
+			runMigration(t, root, sourceDatabase, "down")
+		}
 		connection, err = pgx.Connect(ctx, sourceDatabase)
 		if err != nil {
 			t.Fatalf("connect after rollback: %v", err)
@@ -79,7 +88,7 @@ func TestPlatformDatabaseIntegrationContract(t *testing.T) {
 			t.Fatalf("connect after reapply: %v", err)
 		}
 		defer connection.Close(ctx)
-		var applied int
+		var applied, reapplied int
 		if err := connection.QueryRow(ctx,
 			"SELECT count(*) FROM schema_migrations WHERE version = '0001_platform'",
 		).Scan(&applied); err != nil {
@@ -87,6 +96,12 @@ func TestPlatformDatabaseIntegrationContract(t *testing.T) {
 		}
 		if applied != 1 {
 			t.Fatalf("migration history rows = %d, want 1", applied)
+		}
+		if err := connection.QueryRow(ctx, "SELECT count(*) FROM schema_migrations").Scan(&reapplied); err != nil {
+			t.Fatalf("count reapplied migrations: %v", err)
+		}
+		if reapplied != migrationCount {
+			t.Fatalf("reapplied migrations = %d, want %d", reapplied, migrationCount)
 		}
 	})
 

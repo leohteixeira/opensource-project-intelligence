@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -37,6 +38,94 @@ func TestLoadAppliesDefaults(t *testing.T) {
 	if cfg.TelemetryEnabled() {
 		t.Error("TelemetryEnabled() = true, want false when no OTLP endpoint is configured")
 	}
+}
+
+func TestLoadReadsGitHubTokenOnce(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := config.Load("worker", lookupFrom(map[string]string{
+		"DATABASE_URL": "postgres://user:password@localhost:5433/db",
+		"GITHUB_TOKEN": "configured-token",
+	}))
+	if err != nil {
+		t.Fatalf("Load() returned an unexpected error: %v", err)
+	}
+	if cfg.GitHubToken != "configured-token" {
+		t.Errorf("GitHubToken = %q, want the configured value", cfg.GitHubToken)
+	}
+}
+
+func TestTask05ModelIdentityIsOperatorConfiguredAsOnePair(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := config.Load("api", lookupFrom(map[string]string{
+		"DATABASE_URL": "postgres://user:password@localhost:5433/db",
+		"AI_PROVIDER":  "openai-compatible",
+		"AI_MODEL":     "local-analysis-v1",
+	}))
+	if err != nil || cfg.AIProvider != "openai-compatible" || cfg.AIModel != "local-analysis-v1" {
+		t.Fatalf("model identity = %#v, error=%v", cfg, err)
+	}
+	_, err = config.Load("api", lookupFrom(map[string]string{
+		"DATABASE_URL": "postgres://user:password@localhost:5433/db",
+		"AI_PROVIDER":  "openai-compatible",
+	}))
+	if err == nil || !strings.Contains(err.Error(), "AI_PROVIDER and AI_MODEL") {
+		t.Fatalf("partial model identity error = %v", err)
+	}
+}
+
+func TestTask03ProviderCredentialBoundary(t *testing.T) {
+	t.Parallel()
+
+	t.Run("UT-078 malformed required provider configuration fails without credential echo", func(t *testing.T) {
+		const secret = "provider-secret-must-not-appear"
+		_, err := config.Load("worker", lookupFrom(map[string]string{
+			"DATABASE_URL":      "postgres://user:password@localhost:5433/db",
+			"NATS_URL":          "not-a-url-" + secret,
+			"JETSTREAM_ENABLED": "true",
+		}))
+		if err == nil || strings.Contains(err.Error(), secret) {
+			t.Fatalf("provider configuration error = %q", err)
+		}
+	})
+
+	t.Run("UT-079 optional GitHub credential preserves anonymous operation", func(t *testing.T) {
+		cfg, err := config.Load("worker", lookupFrom(map[string]string{
+			"DATABASE_URL": "postgres://user:password@localhost:5433/db",
+		}))
+		if err != nil || cfg.GitHubToken != "" {
+			t.Fatalf("anonymous provider configuration = %#v, %v", cfg, err)
+		}
+	})
+
+	t.Run("UT-081 end-user credentials are absent from process configuration", func(t *testing.T) {
+		typeOf := reflect.TypeOf(config.Config{})
+		for index := range typeOf.NumField() {
+			name := strings.ToLower(typeOf.Field(index).Name)
+			if strings.Contains(name, "usercredential") || strings.Contains(name, "membertoken") {
+				t.Fatalf("process configuration exposes end-user credential field %q", name)
+			}
+		}
+	})
+
+	t.Run("UT-082 UT-083 provider credential is read once before collection becomes active", func(t *testing.T) {
+		reads := 0
+		lookup := func(key string) (string, bool) {
+			if key == "GITHUB_TOKEN" {
+				reads++
+				return "validated-at-startup", true
+			}
+			if key == "DATABASE_URL" {
+				return "postgres://user:password@localhost:5433/db", true
+			}
+			return "", false
+		}
+		cfg, err := config.Load("worker", lookup)
+		if err != nil || cfg.GitHubToken == "" || reads != 1 {
+			t.Fatalf("credential reads = %d, config=%#v, error=%v", reads, cfg, err)
+		}
+	})
 }
 
 func TestLoadRejectsInvalidValues(t *testing.T) {

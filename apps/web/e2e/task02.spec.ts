@@ -17,7 +17,7 @@ interface MockState {
 test('E2E-001 browses public identity without protected disclosure', async ({ page }) => {
   const state = anonymousState();
   await mockAPI(page, state);
-  await page.goto('/en/catalog');
+  await page.goto('/en/catalog', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { name: 'Explore open source projects' })).toBeVisible();
   await expect(page.getByText('Temporal')).toBeVisible();
@@ -25,7 +25,7 @@ test('E2E-001 browses public identity without protected disclosure', async ({ pa
   await page.getByPlaceholder('Search projects').fill('temporal');
   await page.getByRole('button', { name: 'Search' }).click();
   await expect(page).toHaveURL(/q=temporal/);
-  await page.goto('/en/catalog/101');
+  await page.goto('/en/catalog/101', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Temporal' })).toBeVisible();
   await expect(page.getByText('Protected intelligence')).toBeVisible();
   await expect(
@@ -42,7 +42,7 @@ test('E2E-002 authenticates an applicant and exposes access only after local app
 }) => {
   const state = memberState('pending', 'viewer');
   await mockAPI(page, state);
-  await page.goto('/en/access');
+  await page.goto('/en/access', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { name: 'Access request pending' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Account' })).toHaveCount(0);
@@ -50,9 +50,9 @@ test('E2E-002 authenticates an applicant and exposes access only after local app
   await capture(page, 's1-wide', 'pending-shell', 1440, 900);
 
   state.session = activeSession('viewer');
-  await page.reload();
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Your session expired')).toHaveCount(0);
-  await page.goto('/en/account');
+  await page.goto('/en/account', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Account', exact: true })).toBeVisible();
 });
 
@@ -67,7 +67,7 @@ test('E2E-003 governs membership and exposes attributable audit history', async 
     .toBe(1);
   await expect(page.getByText('The membership decision was recorded.')).toBeVisible();
 
-  await page.goto('/en/admin/audit');
+  await page.goto('/en/admin/audit', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('membership.approved')).toBeVisible();
   await expect(page.getByText('member', { exact: true })).toBeVisible();
 });
@@ -127,7 +127,7 @@ test('E2E-032 applies current local service-account state and attribution', asyn
   await expect
     .poll(() => state.mutations.filter((value) => value === 'service-update').length)
     .toBe(1);
-  await page.goto('/en/admin/audit');
+  await page.goto('/en/admin/audit', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('service_account')).toBeVisible();
   await expect(page.getByText('export.started')).toBeVisible();
 });
@@ -138,12 +138,12 @@ test('E2E-033 handles keyboard entry, offline state, unauthorized routes, and no
   const state = anonymousState();
   state.sessionFailure = true;
   await mockAPI(page, state);
-  await page.goto('/en/not-a-route');
+  await page.goto('/en/not-a-route', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByText('The service is temporarily unavailable')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
   await tabTo(page, page.getByRole('link', { name: 'Skip to content' }));
-  await page.goto('/en/account');
+  await page.goto('/en/account', { waitUntil: 'domcontentloaded' });
   await expect(
     page.getByRole('heading', { name: 'You do not have access to this page' }),
   ).toBeVisible();
@@ -156,13 +156,15 @@ test('E2E-034 represents empty, no-match, paged, and protected catalog states', 
   const state = anonymousState();
   state.catalog = [];
   await mockAPI(page, state);
-  await page.goto('/en/catalog?q=absent');
+  await page.goto('/en/catalog?q=absent', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'No projects match this search' })).toBeVisible();
 
   state.catalog = projectRows();
-  await page.goto('/en/catalog?page=2&cursor=signed-cursor');
+  await page.goto('/en/catalog?page=2&cursor=signed-cursor', {
+    waitUntil: 'domcontentloaded',
+  });
   await expect(page.getByText('Page 2')).toBeVisible();
-  await page.goto('/en/catalog/101');
+  await page.goto('/en/catalog/101', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText(/require an approved local role/i)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Sign in' }).first()).toBeVisible();
   await assertAccessible(page);
@@ -173,12 +175,12 @@ test('E2E-035 renders suspended access and recoverable preference conflicts with
 }) => {
   const state = memberState('suspended', 'viewer');
   await mockAPI(page, state);
-  await page.goto('/en/access');
+  await page.goto('/en/access', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Workspace access suspended' })).toBeVisible();
 
   state.session = activeSession('viewer');
   state.preferenceConflict = true;
-  await page.goto('/en/account');
+  await page.goto('/en/account', { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Timezone').fill('Europe/Lisbon');
   await page.getByRole('button', { name: 'Save preferences' }).click();
   await expect(
@@ -192,11 +194,11 @@ test('E2E-055 operates all redacted administration surfaces at narrow and wide w
 }) => {
   const state = memberState('active', 'admin');
   await mockAPI(page, state);
-  await page.goto('/en/admin/members');
+  await page.goto('/en/admin/members', { waitUntil: 'domcontentloaded' });
   await capture(page, 's23-narrow', 'members', 320, 900);
   await capture(page, 's23-wide', 'members', 1440, 900);
 
-  await page.goto('/en/admin/service-accounts');
+  await page.goto('/en/admin/service-accounts', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Service accounts' })).toBeVisible();
   await page.getByLabel('Name').fill('Evidence reader');
   await page.getByLabel('External subject').fill('evidence-reader');
@@ -205,9 +207,9 @@ test('E2E-055 operates all redacted administration surfaces at narrow and wide w
     .poll(() => state.mutations.filter((value) => value === 'service-create').length)
     .toBe(1);
 
-  await page.goto('/en/admin/audit');
+  await page.goto('/en/admin/audit', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('These security events are append-only')).toBeVisible();
-  await page.goto('/en/admin/operations');
+  await page.goto('/en/admin/operations', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('healthy', { exact: true })).toBeVisible();
   await expect(page.getByText(/Enabled · healthy/)).toBeVisible();
   await expect(page.getByText(/secret-value|https:\/\/keycloak/i)).toHaveCount(0);

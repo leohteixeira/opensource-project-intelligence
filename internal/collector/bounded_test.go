@@ -58,6 +58,7 @@ func TestRunBoundedRunsEveryTask(t *testing.T) {
 	}
 }
 
+// IT-030: workspace-wide backfill execution remains explicitly bounded.
 func TestRunBoundedNeverExceedsTheLimit(t *testing.T) {
 	t.Parallel()
 

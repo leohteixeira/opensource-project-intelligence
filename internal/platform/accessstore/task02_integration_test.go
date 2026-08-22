@@ -270,7 +270,7 @@ func TestTask02IntegrationContracts(t *testing.T) {
 		}
 	})
 
-	t.Run("IT-010 deletion wins over concurrent profile edits", func(t *testing.T) {
+	t.Run("IT-010 IT-132 deletion wins over concurrent profile edits and erases personal data", func(t *testing.T) {
 		h.reset(t)
 		h.seedMember(t, "admin", access.RoleAdmin, access.StatusActive)
 		target := h.seedMember(t, "delete-race", access.RoleViewer, access.StatusActive)
