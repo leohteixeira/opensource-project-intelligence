@@ -6,6 +6,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -56,6 +57,18 @@ type Config struct {
 	// ValkeyEnabled enables disposable acceleration state.
 	ValkeyEnabled bool
 	ValkeyURL     string
+
+	// PublicBaseURL is the exact same-origin browser URL used for redirects and
+	// unsafe-request origin validation.
+	PublicBaseURL string
+
+	// Keycloak settings identify the externally managed OIDC client. The
+	// product never provisions users, realms, clients, or credentials.
+	KeycloakIssuerURL        string
+	KeycloakClientID         string
+	KeycloakClientSecretFile string
+	SessionKeyFile           string
+	SessionDuration          time.Duration
 }
 
 // Load reads the configuration from lookup, which is normally os.LookupEnv.
@@ -83,6 +96,16 @@ func Load(serviceName string, lookup func(string) (string, bool)) (Config, error
 		S3AccessKey: stringOrDefault(lookup, "S3_ACCESS_KEY", ""),
 		S3SecretKey: stringOrDefault(lookup, "S3_SECRET_KEY", ""),
 		ValkeyURL:   strings.TrimSpace(stringOrDefault(lookup, "VALKEY_URL", "")),
+		PublicBaseURL: strings.TrimSpace(stringOrDefault(
+			lookup, "PUBLIC_BASE_URL", "http://localhost:8100")),
+		KeycloakIssuerURL: strings.TrimSpace(
+			stringOrDefault(lookup, "KEYCLOAK_ISSUER_URL", "")),
+		KeycloakClientID: strings.TrimSpace(
+			stringOrDefault(lookup, "KEYCLOAK_CLIENT_ID", "")),
+		KeycloakClientSecretFile: strings.TrimSpace(
+			stringOrDefault(lookup, "KEYCLOAK_CLIENT_SECRET_FILE", "")),
+		SessionKeyFile: strings.TrimSpace(
+			stringOrDefault(lookup, "SESSION_KEY_FILE", "")),
 	}
 
 	var err error
@@ -97,6 +120,9 @@ func Load(serviceName string, lookup func(string) (string, bool)) (Config, error
 		problems = append(problems, err.Error())
 	} else if cfg.WorkerConcurrency < 1 {
 		problems = append(problems, "WORKER_CONCURRENCY must be at least 1")
+	}
+	if cfg.SessionDuration, err = durationOrDefault(lookup, "SESSION_DURATION", 12*time.Hour); err != nil {
+		problems = append(problems, err.Error())
 	}
 	if cfg.JetStreamEnabled, err = boolOrDefault(lookup, "JETSTREAM_ENABLED", false); err != nil {
 		problems = append(problems, err.Error())
@@ -129,6 +155,24 @@ func Load(serviceName string, lookup func(string) (string, bool)) (Config, error
 	}
 	if cfg.ValkeyEnabled && cfg.ValkeyURL == "" {
 		problems = append(problems, "VALKEY_URL is required when VALKEY_ENABLED is true")
+	}
+	publicURL, parseErr := url.Parse(cfg.PublicBaseURL)
+	if parseErr != nil || publicURL.Host == "" || publicURL.Scheme == "" {
+		problems = append(problems, "PUBLIC_BASE_URL must be an absolute URL")
+	} else if cfg.Environment == "production" && publicURL.Scheme != "https" {
+		problems = append(problems, "PUBLIC_BASE_URL must use HTTPS in production")
+	}
+	if cfg.Environment == "production" {
+		for _, field := range []struct{ name, value string }{
+			{"KEYCLOAK_ISSUER_URL", cfg.KeycloakIssuerURL},
+			{"KEYCLOAK_CLIENT_ID", cfg.KeycloakClientID},
+			{"KEYCLOAK_CLIENT_SECRET_FILE", cfg.KeycloakClientSecretFile},
+			{"SESSION_KEY_FILE", cfg.SessionKeyFile},
+		} {
+			if field.value == "" {
+				problems = append(problems, field.name+" is required in production")
+			}
+		}
 	}
 
 	if len(problems) > 0 {
