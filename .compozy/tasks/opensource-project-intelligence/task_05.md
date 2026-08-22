@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Add extended sources, knowledge retrieval, topics, releases, and immutable AI analyses
 type: fullstack
 complexity: high

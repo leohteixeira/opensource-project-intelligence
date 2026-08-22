@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Materialize deterministic metrics, health, contributors, and comparisons
 type: fullstack
 complexity: high

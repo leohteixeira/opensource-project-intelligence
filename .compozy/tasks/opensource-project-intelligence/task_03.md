@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Implement Projects, durable work, evidence ownership, and core source ingestion
 type: fullstack
 complexity: critical
@@ -58,20 +58,20 @@ platform primitives downstream intelligence uses.
 
 ## Subtasks
 
-- [ ] Implement Project, Repository, Source, association, lifecycle, ownership, Job, attempt,
+- [x] Implement Project, Repository, Source, association, lifecycle, ownership, Job, attempt,
       checkpoint, idempotency, outbox, and purge aggregates and persistence.
-- [ ] Implement transactional commands and every assigned portfolio/project/repository/source/
+- [x] Implement transactional commands and every assigned portfolio/project/repository/source/
       association/sync/history/Job HTTP operation.
-- [ ] Implement JetStream relay/consumer semantics, worker leases, retries, dead-letter advisories,
+- [x] Implement JetStream relay/consumer semantics, worker leases, retries, dead-letter advisories,
       cancellation, SSE replay, polling fallback, quotas, and graceful shutdown.
-- [ ] Implement S3 atomic visibility/checksum ownership and Valkey degradation without authority.
-- [ ] Implement GitHub and restricted Git collectors, canonical mapping, initial backfill,
+- [x] Implement S3 atomic visibility/checksum ownership and Valkey degradation without authority.
+- [x] Implement GitHub and restricted Git collectors, canonical mapping, initial backfill,
       incremental synchronization, event ordering, and public-only transport safety.
-- [ ] Implement Project identity resolution and reversible Analyst corrections with targeted
+- [x] Implement Project identity resolution and reversible Analyst corrections with targeted
       invalidation.
-- [ ] Replace S4–S8 fixtures with generated-client queries/mutations while preserving the imported
+- [x] Replace S4–S8 fixtures with generated-client queries/mutations while preserving the imported
       design system and frozen responsive states.
-- [ ] Implement every assigned unit, real-service integration, race, and browser test.
+- [x] Implement every assigned unit, real-service integration, race, and browser test.
 
 ## Implementation Details
 
@@ -122,11 +122,64 @@ Implement these normative cases from \_tests.md exactly once:
 
 ## Success Criteria
 
-- [ ] Commands never publish partial aggregate/Job/outbox state and redelivery never duplicates
+- [x] Commands never publish partial aggregate/Job/outbox state and redelivery never duplicates
       canonical facts.
-- [ ] Workers remain bounded, leased, resumable, observable, cancellation-aware, and race-free.
-- [ ] Unsafe/private sources cannot cause protected HTTP, local Git execution, secret exposure, or
+- [x] Workers remain bounded, leased, resumable, observable, cancellation-aware, and race-free.
+- [x] Unsafe/private sources cannot cause protected HTTP, local Git execution, secret exposure, or
       unowned object visibility.
-- [ ] Project lifecycle, purge, archive, corrections, coverage, quotas, Jobs, and UI states satisfy
+- [x] Project lifecycle, purge, archive, corrections, coverage, quotas, Jobs, and UI states satisfy
       their frozen contracts.
-- [ ] All 184 assigned tests pass with fresh evidence.
+- [x] All 184 assigned tests pass with fresh evidence.
+
+## Recovery Continuation Evidence — 2026-08-22
+
+The recovery continuation preserved the prior uncommitted Task 2 and Task 3 work and completed these
+additional Task 3 slices:
+
+- Concurrent registration now serializes by idempotency scope and canonical repository identity;
+  every duplicate request resolves the same Project and initial Job without creating partial state.
+- GitHub ingestion now owns independently checkpointed issue, pull-request, release, and commit
+  pages, retaining raw DTO bytes and committing canonical facts, coverage, and checkpoints together.
+- Job event delivery now provides a resumable live SSE stream with durable replay, terminal close,
+  heartbeats, and the existing JSON polling fallback.
+- Real JetStream verification corrected NATS header negotiation, header-bearing response parsing,
+  and request subscription lifecycle; stable message identity now deduplicates broker retries.
+- A real MinIO contract verifies staging, atomic promotion, checksum-preserving reads, and purge.
+
+Fresh passing evidence gathered after the implementation changes:
+
+- `make check`: generated-source drift, Go formatting, `go vet`, `go test -race ./...`, and
+  `go build ./...` passed.
+- `go test -tags=integration ./... -count=1` passed against the running PostgreSQL 18, NATS
+  JetStream, and MinIO services with explicit integration endpoints.
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` passed; Vitest reported 87 tests.
+- `pnpm --dir apps/web exec playwright test e2e/task03.spec.ts` passed 13 Chromium tests including
+  the current axe scan and refreshed narrow/wide screenshots.
+
+The final recovery closed every previously recorded blocker:
+
+- The worker now consumes broker-selected Job IDs through an explicit-ack durable JetStream pull
+  consumer while PostgreSQL remains authoritative. Real broker verification found and fixed the
+  HMSG subscription-SID parsing rule and status-frame handling; retries and dead-letter advisories
+  are committed through the outbox before acknowledgement.
+- Valkey now provides disposable publish/subscribe wake-ups with a real-service degradation
+  contract; failures never replace PostgreSQL polling or committed Job state.
+- `task03.real.spec.ts` exercises the current generated client against the Go E2E backend and
+  verifies registration persistence after reload, Job visibility, and Portfolio visibility.
+  `task03.spec.ts` covers the frozen S4-S8 responsive state matrix and Axe, refreshing all ten
+  required visual evidence directories.
+- The assignment audit found all 184 normative identifiers in concrete Go, Vitest, or Playwright
+  tests.
+
+Final fresh evidence:
+
+- `make check` passed generation drift, Go formatting, `go vet ./...`, `go test -race ./...`, and
+  `go build ./...`.
+- `go test -race -count=1 ./...` passed every Go package without test-result cache reuse.
+- `go test -tags=integration ./... -count=1` passed against PostgreSQL 18, NATS JetStream, MinIO,
+  and Valkey with explicit local integration endpoints.
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` passed; Vitest reported 93 tests.
+- `pnpm format:check` and `pnpm lint:md` passed.
+- `pnpm --dir apps/web exec playwright test e2e/task03.spec.ts e2e/task03.real.spec.ts` passed all
+  14 Chromium journeys and the Axe scan, with current narrow/wide artifacts under
+  `artifacts/task_03/ui/`.

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Implement identity, local access governance, audit, and the localized application shell
 type: fullstack
 complexity: high
