@@ -237,7 +237,10 @@ function Protected({ required, children }: { required: 'member' | 'admin'; child
 }
 
 function AccessScreen() {
-  const { session } = useApplication();
+  const { session, locale } = useApplication();
+  if (session.state === 'active') {
+    return <Navigate to={routePath(locale, 'account')} replace />;
+  }
   return <AccessState state={session.state ?? 'anonymous'} />;
 }
 

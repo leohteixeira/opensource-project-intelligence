@@ -20,7 +20,7 @@
   --text-primary: var(--gray-900);
   --text-body: var(--gray-800);
   --text-secondary: var(--gray-500);
-  --text-tertiary: var(--gray-400);
+  --text-tertiary: var(--gray-500);
   --text-inverse: var(--white);
   --text-link: var(--blue-600);
   --text-link-hover: var(--blue-700);
