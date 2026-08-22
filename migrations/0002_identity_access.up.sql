@@ -27,6 +27,7 @@ CREATE TABLE memberships (
     requested_at timestamptz NOT NULL DEFAULT now(),
     decided_at timestamptz,
     deleted_at timestamptz,
+    deletion_job_id bigint REFERENCES jobs (id),
     UNIQUE (workspace_id, identity_id),
     CHECK ((status = 'active' AND role IS NOT NULL) OR status <> 'active')
 );
@@ -116,4 +117,3 @@ $$;
 CREATE TRIGGER audit_events_immutable_update
 BEFORE UPDATE OR DELETE ON audit_events
 FOR EACH ROW EXECUTE FUNCTION reject_audit_event_mutation();
-

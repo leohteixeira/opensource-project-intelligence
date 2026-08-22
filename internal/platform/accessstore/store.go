@@ -411,7 +411,7 @@ func (s *Store) ApproveMember(
 		return access.Member{}, err
 	}
 	if decision != "approve" && decision != "reject" {
-		return access.Member{}, errors.New("decision must be approve or reject")
+		return access.Member{}, fmt.Errorf("%w: decision must be approve or reject", access.ErrInvalidInput)
 	}
 	if decision == "approve" {
 		if err := access.ValidateRole(role, false); err != nil {
@@ -420,14 +420,31 @@ func (s *Store) ApproveMember(
 	} else {
 		role = ""
 	}
-	tx, err := s.pool.Begin(ctx)
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		return access.Member{}, fmt.Errorf("begin member approval: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	current, err := scanMember(tx.QueryRow(ctx, `
+		SELECT m.id, m.identity_id, i.display_name, i.email, COALESCE(m.role, ''), m.status,
+			m.locale, m.timezone, m.version, m.requested_at
+		FROM memberships m JOIN external_identities i ON i.id = m.identity_id
+		WHERE m.id = $1 AND m.workspace_id = $2 FOR UPDATE`, memberID, WorkspaceID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return access.Member{}, access.ErrNotFound
+	}
+	if err != nil {
+		return access.Member{}, fmt.Errorf("lock member approval: %w", err)
+	}
 	status := access.StatusRejected
 	if decision == "approve" {
 		status = access.StatusActive
+	}
+	if current.Status == status && current.Role == role {
+		if err := tx.Commit(ctx); err != nil {
+			return access.Member{}, fmt.Errorf("commit repeated member approval: %w", err)
+		}
+		return current, nil
 	}
 	member, err := scanMember(tx.QueryRow(ctx, `
 		UPDATE memberships m SET role = NULLIF($2, ''), status = $3, decided_at = now(),
@@ -470,7 +487,7 @@ func (s *Store) UpdateMember(
 		}
 	}
 	if status != "" && status != access.StatusActive && status != access.StatusSuspended {
-		return access.Member{}, errors.New("member state must be active or suspended")
+		return access.Member{}, fmt.Errorf("%w: member state must be active or suspended", access.ErrInvalidInput)
 	}
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
@@ -589,11 +606,19 @@ func (s *Store) DeleteAccount(
 			m.locale, m.timezone, m.version, m.requested_at
 		FROM memberships m JOIN external_identities i ON i.id = m.identity_id
 		WHERE m.id = $1 FOR UPDATE`, actor.ActorID))
-	if errors.Is(err, pgx.ErrNoRows) || target.Status == access.StatusDeleted {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, access.ErrNotFound
 	}
 	if err != nil {
 		return 0, fmt.Errorf("lock account for deletion: %w", err)
+	}
+	if target.Status == access.StatusDeleted {
+		var existingJobID int64
+		if err := tx.QueryRow(ctx, `SELECT deletion_job_id FROM memberships WHERE id = $1`, actor.ActorID).
+			Scan(&existingJobID); err != nil {
+			return 0, fmt.Errorf("read completed account deletion: %w", err)
+		}
+		return existingJobID, nil
 	}
 	var activeAdmins int
 	if err := tx.QueryRow(ctx, `SELECT count(*) FROM memberships
@@ -611,12 +636,6 @@ func (s *Store) DeleteAccount(
 	if err != nil {
 		return 0, fmt.Errorf("delete account profile: %w", err)
 	}
-	_, err = tx.Exec(ctx, `UPDATE memberships
-		SET role = NULL, status = 'deleted', locale = 'en', timezone = 'UTC',
-			version = version + 1, deleted_at = now() WHERE id = $1`, actor.ActorID)
-	if err != nil {
-		return 0, fmt.Errorf("delete account membership: %w", err)
-	}
 	jobID, err := s.ids.Next(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("issue account deletion job ID: %w", err)
@@ -624,6 +643,12 @@ func (s *Store) DeleteAccount(
 	if _, err := tx.Exec(ctx, `INSERT INTO jobs (id, kind, state, checkpoint)
 		VALUES ($1, 'account_deletion', 'succeeded', '{"personal_data":"purged"}')`, jobID); err != nil {
 		return 0, fmt.Errorf("record account deletion job: %w", err)
+	}
+	_, err = tx.Exec(ctx, `UPDATE memberships
+		SET role = NULL, status = 'deleted', locale = 'en', timezone = 'UTC',
+			version = version + 1, deleted_at = now(), deletion_job_id = $2 WHERE id = $1`, actor.ActorID, jobID)
+	if err != nil {
+		return 0, fmt.Errorf("delete account membership: %w", err)
 	}
 	deletedActor := actor
 	deletedActor.Kind = access.ActorDeleted

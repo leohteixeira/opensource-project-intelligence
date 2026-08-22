@@ -59,6 +59,7 @@ var (
 	ErrLastAdminRequired      = errors.New("last active admin is required")
 	ErrVersionConflict        = errors.New("membership version conflict")
 	ErrNotFound               = errors.New("resource not found")
+	ErrInvalidInput           = errors.New("invalid input")
 )
 
 type IdentityKey struct {
@@ -69,10 +70,10 @@ type IdentityKey struct {
 func (k IdentityKey) Validate() error {
 	issuer, err := url.ParseRequestURI(k.Issuer)
 	if err != nil || issuer.Scheme != "https" || issuer.Host == "" {
-		return errors.New("identity issuer must be an absolute HTTPS URL")
+		return fmt.Errorf("%w: identity issuer must be an absolute HTTPS URL", ErrInvalidInput)
 	}
 	if strings.TrimSpace(k.Subject) == "" || len(k.Subject) > 255 {
-		return errors.New("identity subject is required and must not exceed 255 characters")
+		return fmt.Errorf("%w: identity subject is required and must not exceed 255 characters", ErrInvalidInput)
 	}
 	return nil
 }
@@ -124,7 +125,7 @@ func Authorize(p Principal, action Action) error {
 
 func ValidateRole(role Role, service bool) error {
 	if !validRole(role) || service && role == RoleAdmin {
-		return fmt.Errorf("invalid role %q", role)
+		return fmt.Errorf("%w: invalid role %q", ErrInvalidInput, role)
 	}
 	return nil
 }

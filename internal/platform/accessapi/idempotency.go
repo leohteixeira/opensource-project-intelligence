@@ -11,6 +11,7 @@ type idempotencyResult int
 const (
 	idempotencyNew idempotencyResult = iota
 	idempotencyReplay
+	idempotencyWait
 	idempotencyConflict
 )
 
@@ -34,6 +35,7 @@ type idempotencyEntry struct {
 	digest   [sha256.Size]byte
 	response cachedResponse
 	complete bool
+	ready    chan struct{}
 }
 
 type idempotencyCache struct {
@@ -45,24 +47,32 @@ func newIdempotencyCache() *idempotencyCache {
 	return &idempotencyCache{entries: make(map[string]idempotencyEntry)}
 }
 
-func (c *idempotencyCache) Begin(key string, digest [sha256.Size]byte) (cachedResponse, idempotencyResult) {
+func (c *idempotencyCache) Begin(key string, digest [sha256.Size]byte) (cachedResponse, <-chan struct{}, idempotencyResult) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	entry, exists := c.entries[key]
 	if !exists {
-		c.entries[key] = idempotencyEntry{digest: digest}
-		return cachedResponse{}, idempotencyNew
+		c.entries[key] = idempotencyEntry{digest: digest, ready: make(chan struct{})}
+		return cachedResponse{}, nil, idempotencyNew
 	}
-	if entry.digest != digest || !entry.complete {
-		return cachedResponse{}, idempotencyConflict
+	if entry.digest != digest {
+		return cachedResponse{}, nil, idempotencyConflict
 	}
-	return entry.response, idempotencyReplay
+	if !entry.complete {
+		return cachedResponse{}, entry.ready, idempotencyWait
+	}
+	return entry.response, nil, idempotencyReplay
 }
 
 func (c *idempotencyCache) Complete(key string, digest [sha256.Size]byte, response cachedResponse) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.entries[key] = idempotencyEntry{digest: digest, response: response, complete: true}
+	entry := c.entries[key]
+	entry.digest = digest
+	entry.response = response
+	entry.complete = true
+	c.entries[key] = entry
+	close(entry.ready)
 }
 
 type responseRecorder struct {

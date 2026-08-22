@@ -489,7 +489,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	}
 	returnTo, err := oidc.ValidateReturnTo(r.URL.Query().Get("return_to"))
 	if err != nil {
-		h.problem(w, r, err)
+		h.problem(w, r, invalidRequest(err))
 		return
 	}
 	state, stateHash, err := access.NewSecret()
@@ -691,11 +691,24 @@ func (h *Handler) serveIdempotent(w http.ResponseWriter, r *http.Request, next h
 	cacheKey := fmt.Sprintf("%s:%d:%s:%s:%s", state.principal.Kind, state.principal.ActorID,
 		r.Method, r.URL.Path, key)
 	digest := sha256.Sum256(body)
-	if response, result := h.idempotent.Begin(cacheKey, digest); result != idempotencyNew {
+	if response, ready, result := h.idempotent.Begin(cacheKey, digest); result != idempotencyNew {
 		if result == idempotencyConflict {
 			h.problem(w, r, httpx.NewProblem(http.StatusConflict, "idempotency_conflict",
 				"Idempotency conflict", "The key was already used with different input.", nil))
 			return
+		}
+		if result == idempotencyWait {
+			select {
+			case <-ready:
+				response, _, result = h.idempotent.Begin(cacheKey, digest)
+				if result != idempotencyReplay {
+					h.problem(w, r, httpx.NewProblem(http.StatusConflict, "idempotency_conflict",
+						"Idempotency conflict", "The original request did not complete.", nil))
+					return
+				}
+			case <-r.Context().Done():
+				return
+			}
 		}
 		response.replay(w)
 		return
@@ -825,7 +838,7 @@ func parseETag(value string) (int64, error) {
 func formatETag(version int64) string { return fmt.Sprintf("\"v%d\"", version) }
 
 func decodeJSON(r *http.Request, target any) error {
-	decoder := json.NewDecoder(http.MaxBytesReader(nil, r.Body, maxBodyBytes))
+	decoder := json.NewDecoder(io.LimitReader(r.Body, maxBodyBytes+1))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
 		return invalidRequest(err)
@@ -865,6 +878,8 @@ func transportError(err error) error {
 	case errors.Is(err, access.ErrNotFound):
 		return httpx.NewProblem(http.StatusNotFound, "resource_not_found", "Resource not found",
 			"The requested resource does not exist.", err)
+	case errors.Is(err, access.ErrInvalidInput):
+		return invalidRequest(err)
 	default:
 		return httpx.NewProblem(http.StatusInternalServerError, "internal_error", "Internal server error",
 			"The request could not be completed.", err)
