@@ -16,5 +16,6 @@ coverage/
 !env.example
 
 # Tooling
+/.cache/
 .DS_Store
 *.log
