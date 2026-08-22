@@ -1,0 +1,202 @@
+import i18n from 'i18next';
+import ICU from 'i18next-icu';
+import { initReactI18next } from 'react-i18next';
+
+export const supportedLocales = ['en', 'pt-BR'] as const;
+export type Locale = (typeof supportedLocales)[number];
+
+const en = {
+  skip: 'Skip to content',
+  primaryNavigation: 'Primary navigation',
+  catalog: 'Public catalog',
+  catalogTitle: 'Explore open source projects',
+  catalogIntro:
+    'Public identity and source links are available without an account. Sign in for protected intelligence.',
+  search: 'Search projects',
+  searchAction: 'Search',
+  noProjects: 'No public projects yet',
+  noMatches: 'No projects match this search',
+  noProjectsHelp: 'Projects appear here after an administrator publishes their public identity.',
+  retry: 'Try again',
+  nextPage: 'Next page',
+  signIn: 'Sign in',
+  signOut: 'Sign out',
+  account: 'Account',
+  accessPending: 'Access request pending',
+  accessPendingBody:
+    'An administrator must approve your local workspace membership. Public catalog access remains available.',
+  accessRejected: 'Access request rejected',
+  accessSuspended: 'Workspace access suspended',
+  accessSuspendedBody: 'Your external identity is valid, but local workspace access is suspended.',
+  sessionExpired: 'Your session expired',
+  offline: 'The service is temporarily unavailable',
+  offlineBody: 'The last safe page remains visible where available. Reconnect and try again.',
+  preferences: 'Language and timezone',
+  locale: 'Language',
+  timezone: 'Timezone',
+  save: 'Save preferences',
+  saved: 'Preferences saved',
+  conflict: 'This account changed elsewhere. Refresh before saving again.',
+  deletion: 'Remove my account',
+  deletionHelp:
+    'This revokes sessions and removes personal profile data. Shared project evidence remains.',
+  deletionConfirmation: 'Type DELETE MY ACCOUNT to confirm',
+  deleteAction: 'Delete my account',
+  members: 'Members',
+  serviceAccounts: 'Service accounts',
+  audit: 'Audit',
+  operations: 'Operations',
+  administration: 'Administration',
+  name: 'Name',
+  email: 'Email',
+  role: 'Role',
+  state: 'State',
+  action: 'Action',
+  approveViewer: 'Approve as Viewer',
+  reject: 'Reject',
+  subject: 'External subject',
+  scopes: 'Scopes',
+  outcome: 'Outcome',
+  resource: 'Resource',
+  occurredAt: 'Occurred at',
+  noRows: 'Nothing to show',
+  redactedOperations:
+    'Only redacted capability and health status is shown. Credentials and endpoints are never returned.',
+  unauthorized: 'You do not have access to this page',
+  notFound: 'Page not found',
+  backToCatalog: 'Back to catalog',
+  loading: 'Checking current access…',
+  projectSources: 'Public sources',
+  protectedTeaser: 'Protected intelligence',
+  protectedTeaserBody: 'Metrics, analysis, evidence, and exports require an approved local role.',
+  originalEvidence: 'Source evidence remains in its original language.',
+  publicIdentity: 'Public project identity',
+  publicOnly: 'Only public identity and source links are shown on this page.',
+  sourceLink: 'Open source',
+  previousPage: 'Previous page',
+  requestFailed: 'This section could not be loaded.',
+  accountUpdated: 'Your account settings are current.',
+  deletionQueued: 'Account removal has started. Your sessions are now revoked.',
+  deletionWarning: 'This action cannot be undone.',
+  memberActionComplete: 'The membership decision was recorded.',
+  serviceAccountHelp:
+    'Service accounts use an external subject and only the explicitly granted scopes.',
+  auditImmutable: 'These security events are append-only and display redacted request metadata.',
+  health: 'Health',
+  capabilities: 'Capabilities',
+  enabled: 'Enabled',
+  disabled: 'Disabled',
+  refresh: 'Refresh',
+  page: 'Page',
+  localeEnglish: 'English',
+  localePortuguese: 'Português (Brasil)',
+};
+
+const ptBR: Record<keyof typeof en, string> = {
+  skip: 'Pular para o conteúdo',
+  primaryNavigation: 'Navegação principal',
+  catalog: 'Catálogo público',
+  catalogTitle: 'Explore projetos de código aberto',
+  catalogIntro:
+    'A identidade pública e os links das fontes estão disponíveis sem conta. Entre para acessar inteligência protegida.',
+  search: 'Pesquisar projetos',
+  searchAction: 'Pesquisar',
+  noProjects: 'Ainda não há projetos públicos',
+  noMatches: 'Nenhum projeto corresponde a esta pesquisa',
+  noProjectsHelp:
+    'Os projetos aparecem aqui quando uma pessoa administradora publica sua identidade pública.',
+  retry: 'Tentar novamente',
+  nextPage: 'Próxima página',
+  signIn: 'Entrar',
+  signOut: 'Sair',
+  account: 'Conta',
+  accessPending: 'Solicitação de acesso pendente',
+  accessPendingBody:
+    'Uma pessoa administradora precisa aprovar sua associação local. O catálogo público continua disponível.',
+  accessRejected: 'Solicitação de acesso rejeitada',
+  accessSuspended: 'Acesso ao espaço suspenso',
+  accessSuspendedBody:
+    'Sua identidade externa é válida, mas o acesso local ao espaço está suspenso.',
+  sessionExpired: 'Sua sessão expirou',
+  offline: 'O serviço está temporariamente indisponível',
+  offlineBody:
+    'A última página segura permanece visível quando possível. Reconecte e tente novamente.',
+  preferences: 'Idioma e fuso horário',
+  locale: 'Idioma',
+  timezone: 'Fuso horário',
+  save: 'Salvar preferências',
+  saved: 'Preferências salvas',
+  conflict: 'Esta conta mudou em outro lugar. Atualize antes de salvar novamente.',
+  deletion: 'Remover minha conta',
+  deletionHelp:
+    'Isso revoga sessões e remove dados pessoais do perfil. Evidências compartilhadas permanecem.',
+  deletionConfirmation: 'Digite DELETE MY ACCOUNT para confirmar',
+  deleteAction: 'Excluir minha conta',
+  members: 'Membros',
+  serviceAccounts: 'Contas de serviço',
+  audit: 'Auditoria',
+  operations: 'Operações',
+  administration: 'Administração',
+  name: 'Nome',
+  email: 'E-mail',
+  role: 'Função',
+  state: 'Estado',
+  action: 'Ação',
+  approveViewer: 'Aprovar como Viewer',
+  reject: 'Rejeitar',
+  subject: 'Identificador externo',
+  scopes: 'Escopos',
+  outcome: 'Resultado',
+  resource: 'Recurso',
+  occurredAt: 'Ocorrido em',
+  noRows: 'Nada para mostrar',
+  redactedOperations:
+    'Somente o estado redigido de capacidades e saúde é exibido. Credenciais e endpoints nunca são retornados.',
+  unauthorized: 'Você não tem acesso a esta página',
+  notFound: 'Página não encontrada',
+  backToCatalog: 'Voltar ao catálogo',
+  loading: 'Verificando o acesso atual…',
+  projectSources: 'Fontes públicas',
+  protectedTeaser: 'Inteligência protegida',
+  protectedTeaserBody:
+    'Métricas, análises, evidências e exportações exigem uma função local aprovada.',
+  originalEvidence: 'A evidência da fonte permanece no idioma original.',
+  publicIdentity: 'Identidade pública do projeto',
+  publicOnly: 'Somente a identidade pública e os links das fontes são exibidos nesta página.',
+  sourceLink: 'Abrir fonte',
+  previousPage: 'Página anterior',
+  requestFailed: 'Não foi possível carregar esta seção.',
+  accountUpdated: 'As configurações da sua conta estão atualizadas.',
+  deletionQueued: 'A remoção da conta começou. Suas sessões foram revogadas.',
+  deletionWarning: 'Esta ação não pode ser desfeita.',
+  memberActionComplete: 'A decisão de associação foi registrada.',
+  serviceAccountHelp:
+    'Contas de serviço usam um identificador externo e somente os escopos concedidos explicitamente.',
+  auditImmutable:
+    'Estes eventos de segurança são somente acréscimo e exibem metadados redigidos da solicitação.',
+  health: 'Saúde',
+  capabilities: 'Capacidades',
+  enabled: 'Ativado',
+  disabled: 'Desativado',
+  refresh: 'Atualizar',
+  page: 'Página',
+  localeEnglish: 'English',
+  localePortuguese: 'Português (Brasil)',
+};
+
+void i18n
+  .use(new ICU())
+  .use(initReactI18next)
+  .init({
+    fallbackLng: 'en',
+    supportedLngs: supportedLocales,
+    load: 'currentOnly',
+    interpolation: { escapeValue: false },
+    resources: { en: { translation: en }, 'pt-BR': { translation: ptBR } },
+  });
+
+export function normalizeLocale(value: string | undefined): Locale {
+  return value?.toLowerCase() === 'pt-br' ? 'pt-BR' : 'en';
+}
+
+export default i18n;

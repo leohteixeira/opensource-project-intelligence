@@ -40,6 +40,9 @@ export interface AppShellProps {
   readonly member?: ShellMember;
   readonly account?: ReactNode;
   readonly locale?: string;
+  readonly skipLabel?: string;
+  readonly primaryNavigationLabel?: string;
+  readonly backLabel?: string;
   readonly children?: ReactNode;
   readonly sidePanel?: ReactNode;
   readonly style?: CSSProperties;
@@ -61,6 +64,9 @@ export function AppShell({
   member,
   account,
   locale = 'en',
+  skipLabel = 'Skip to content',
+  primaryNavigationLabel = 'Primary',
+  backLabel = 'Back',
   children,
   sidePanel,
   style,
@@ -178,7 +184,7 @@ export function AppShell({
       }}
     >
       <a className="opi-skip" href="#main">
-        Skip to content
+        {skipLabel}
       </a>
       <header
         style={{
@@ -197,7 +203,7 @@ export function AppShell({
       >
         <Wordmark variant={mobile ? 'mark' : 'inline'} style={{ flex: 'none' }} />
         {!mobile ? (
-          <nav aria-label="Primary" className="opi-topnav">
+          <nav aria-label={primaryNavigationLabel} className="opi-topnav">
             <div>
               {nav.map(navItem)}
               {secondaryNav.length ? (
@@ -277,7 +283,7 @@ export function AppShell({
                   type="button"
                   className="opi-btn opi-btn--secondary"
                   onClick={onBack}
-                  aria-label="Back"
+                  aria-label={backLabel}
                   style={{ width: 36, height: 36, padding: 0, borderRadius: 'var(--radius-pill)' }}
                 >
                   <Icon name="arrow-left" size={16} />
@@ -328,7 +334,7 @@ export function AppShell({
       </div>
       {mobile ? (
         <nav
-          aria-label="Primary"
+          aria-label={primaryNavigationLabel}
           style={{
             position: 'sticky',
             bottom: 0,
