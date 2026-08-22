@@ -17,18 +17,103 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for DependencyState.
+const (
+	Available   DependencyState = "available"
+	Degraded    DependencyState = "degraded"
+	Disabled    DependencyState = "disabled"
+	Unavailable DependencyState = "unavailable"
+)
+
+// Valid indicates whether the value is a known member of the DependencyState enum.
+func (e DependencyState) Valid() bool {
+	switch e {
+	case Available:
+		return true
+	case Degraded:
+		return true
+	case Disabled:
+		return true
+	case Unavailable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for HealthStatus.
+const (
+	Ok HealthStatus = "ok"
+)
+
+// Valid indicates whether the value is a known member of the HealthStatus enum.
+func (e HealthStatus) Valid() bool {
+	switch e {
+	case Ok:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReadinessStatus.
+const (
+	NotReady ReadinessStatus = "not_ready"
+	Ready    ReadinessStatus = "ready"
+)
+
+// Valid indicates whether the value is a known member of the ReadinessStatus enum.
+func (e ReadinessStatus) Valid() bool {
+	switch e {
+	case NotReady:
+		return true
+	case Ready:
+		return true
+	default:
+		return false
+	}
+}
+
+// DependencyState defines model for DependencyState.
+type DependencyState string
+
 // Document defines model for Document.
 type Document map[string]interface{}
 
+// FieldError defines model for FieldError.
+type FieldError struct {
+	Code  string `json:"code"`
+	Field string `json:"field"`
+}
+
+// Health defines model for Health.
+type Health struct {
+	Status HealthStatus `json:"status"`
+}
+
+// HealthStatus defines model for Health.Status.
+type HealthStatus string
+
 // Problem defines model for Problem.
 type Problem struct {
-	Code      string  `json:"code"`
-	Detail    *string `json:"detail,omitempty"`
-	RequestId string  `json:"request_id"`
-	Status    int     `json:"status"`
-	Title     string  `json:"title"`
-	Type      string  `json:"type"`
+	Code      string        `json:"code"`
+	Detail    *string       `json:"detail,omitempty"`
+	Errors    *[]FieldError `json:"errors,omitempty"`
+	Instance  *string       `json:"instance,omitempty"`
+	RequestId string        `json:"request_id"`
+	Status    int           `json:"status"`
+	Title     string        `json:"title"`
+	Type      string        `json:"type"`
 }
+
+// Readiness defines model for Readiness.
+type Readiness struct {
+	Dependencies map[string]DependencyState `json:"dependencies"`
+	Status       ReadinessStatus            `json:"status"`
+}
+
+// ReadinessStatus defines model for Readiness.Status.
+type ReadinessStatus string
 
 // GetApiV1AdminAuditParams defines parameters for GetApiV1AdminAudit.
 type GetApiV1AdminAuditParams struct {
@@ -3892,16 +3977,16 @@ type PostApiV1AdminServiceAccountsResponseObject interface {
 	VisitPostApiV1AdminServiceAccountsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1AdminServiceAccounts200JSONResponse Document
+type PostApiV1AdminServiceAccounts201JSONResponse Document
 
-func (response PostApiV1AdminServiceAccounts200JSONResponse) VisitPostApiV1AdminServiceAccountsResponse(w http.ResponseWriter) error {
+func (response PostApiV1AdminServiceAccounts201JSONResponse) VisitPostApiV1AdminServiceAccountsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -3971,16 +4056,16 @@ type PostApiV1AlertRulesResponseObject interface {
 	VisitPostApiV1AlertRulesResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1AlertRules200JSONResponse Document
+type PostApiV1AlertRules201JSONResponse Document
 
-func (response PostApiV1AlertRules200JSONResponse) VisitPostApiV1AlertRulesResponse(w http.ResponseWriter) error {
+func (response PostApiV1AlertRules201JSONResponse) VisitPostApiV1AlertRulesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -4203,16 +4288,16 @@ type PostApiV1AnalysisRunsRunIdFeedbackResponseObject interface {
 	VisitPostApiV1AnalysisRunsRunIdFeedbackResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1AnalysisRunsRunIdFeedback200JSONResponse Document
+type PostApiV1AnalysisRunsRunIdFeedback201JSONResponse Document
 
-func (response PostApiV1AnalysisRunsRunIdFeedback200JSONResponse) VisitPostApiV1AnalysisRunsRunIdFeedbackResponse(w http.ResponseWriter) error {
+func (response PostApiV1AnalysisRunsRunIdFeedback201JSONResponse) VisitPostApiV1AnalysisRunsRunIdFeedbackResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -4243,16 +4328,16 @@ type PostApiV1AnalysisRunsRunIdRerunsResponseObject interface {
 	VisitPostApiV1AnalysisRunsRunIdRerunsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1AnalysisRunsRunIdReruns200JSONResponse Document
+type PostApiV1AnalysisRunsRunIdReruns202JSONResponse Document
 
-func (response PostApiV1AnalysisRunsRunIdReruns200JSONResponse) VisitPostApiV1AnalysisRunsRunIdRerunsResponse(w http.ResponseWriter) error {
+func (response PostApiV1AnalysisRunsRunIdReruns202JSONResponse) VisitPostApiV1AnalysisRunsRunIdRerunsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -4400,16 +4485,16 @@ type PostApiV1ComparisonsResponseObject interface {
 	VisitPostApiV1ComparisonsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1Comparisons200JSONResponse Document
+type PostApiV1Comparisons201JSONResponse Document
 
-func (response PostApiV1Comparisons200JSONResponse) VisitPostApiV1ComparisonsResponse(w http.ResponseWriter) error {
+func (response PostApiV1Comparisons201JSONResponse) VisitPostApiV1ComparisonsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -4478,16 +4563,16 @@ type PostApiV1ExportsResponseObject interface {
 	VisitPostApiV1ExportsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1Exports200JSONResponse Document
+type PostApiV1Exports202JSONResponse Document
 
-func (response PostApiV1Exports200JSONResponse) VisitPostApiV1ExportsResponse(w http.ResponseWriter) error {
+func (response PostApiV1Exports202JSONResponse) VisitPostApiV1ExportsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -4635,16 +4720,16 @@ type PostApiV1JobsJobIdCancellationResponseObject interface {
 	VisitPostApiV1JobsJobIdCancellationResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1JobsJobIdCancellation200JSONResponse Document
+type PostApiV1JobsJobIdCancellation202JSONResponse Document
 
-func (response PostApiV1JobsJobIdCancellation200JSONResponse) VisitPostApiV1JobsJobIdCancellationResponse(w http.ResponseWriter) error {
+func (response PostApiV1JobsJobIdCancellation202JSONResponse) VisitPostApiV1JobsJobIdCancellationResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -4713,16 +4798,16 @@ type PostApiV1MeDeletionResponseObject interface {
 	VisitPostApiV1MeDeletionResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1MeDeletion200JSONResponse Document
+type PostApiV1MeDeletion202JSONResponse Document
 
-func (response PostApiV1MeDeletion200JSONResponse) VisitPostApiV1MeDeletionResponse(w http.ResponseWriter) error {
+func (response PostApiV1MeDeletion202JSONResponse) VisitPostApiV1MeDeletionResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -4830,16 +4915,16 @@ type PostApiV1PoliciesResponseObject interface {
 	VisitPostApiV1PoliciesResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1Policies200JSONResponse Document
+type PostApiV1Policies201JSONResponse Document
 
-func (response PostApiV1Policies200JSONResponse) VisitPostApiV1PoliciesResponse(w http.ResponseWriter) error {
+func (response PostApiV1Policies201JSONResponse) VisitPostApiV1PoliciesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -4870,16 +4955,16 @@ type PostApiV1PoliciesPolicyIdVersionsResponseObject interface {
 	VisitPostApiV1PoliciesPolicyIdVersionsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1PoliciesPolicyIdVersions200JSONResponse Document
+type PostApiV1PoliciesPolicyIdVersions201JSONResponse Document
 
-func (response PostApiV1PoliciesPolicyIdVersions200JSONResponse) VisitPostApiV1PoliciesPolicyIdVersionsResponse(w http.ResponseWriter) error {
+func (response PostApiV1PoliciesPolicyIdVersions201JSONResponse) VisitPostApiV1PoliciesPolicyIdVersionsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5068,16 +5153,16 @@ type PostApiV1ProjectsResponseObject interface {
 	VisitPostApiV1ProjectsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1Projects200JSONResponse Document
+type PostApiV1Projects202JSONResponse Document
 
-func (response PostApiV1Projects200JSONResponse) VisitPostApiV1ProjectsResponse(w http.ResponseWriter) error {
+func (response PostApiV1Projects202JSONResponse) VisitPostApiV1ProjectsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5268,16 +5353,16 @@ type PostApiV1ProjectsProjectIdAssociationsAssociationIdCorrectionResponseObject
 	VisitPostApiV1ProjectsProjectIdAssociationsAssociationIdCorrectionResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdAssociationsAssociationIdCorrection200JSONResponse Document
+type PostApiV1ProjectsProjectIdAssociationsAssociationIdCorrection202JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdAssociationsAssociationIdCorrection200JSONResponse) VisitPostApiV1ProjectsProjectIdAssociationsAssociationIdCorrectionResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdAssociationsAssociationIdCorrection202JSONResponse) VisitPostApiV1ProjectsProjectIdAssociationsAssociationIdCorrectionResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5348,16 +5433,16 @@ type PostApiV1ProjectsProjectIdCrawlsResponseObject interface {
 	VisitPostApiV1ProjectsProjectIdCrawlsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdCrawls200JSONResponse Document
+type PostApiV1ProjectsProjectIdCrawls202JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdCrawls200JSONResponse) VisitPostApiV1ProjectsProjectIdCrawlsResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdCrawls202JSONResponse) VisitPostApiV1ProjectsProjectIdCrawlsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5388,16 +5473,16 @@ type PostApiV1ProjectsProjectIdDeletionResponseObject interface {
 	VisitPostApiV1ProjectsProjectIdDeletionResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdDeletion200JSONResponse Document
+type PostApiV1ProjectsProjectIdDeletion202JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdDeletion200JSONResponse) VisitPostApiV1ProjectsProjectIdDeletionResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdDeletion202JSONResponse) VisitPostApiV1ProjectsProjectIdDeletionResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5468,16 +5553,16 @@ type PostApiV1ProjectsProjectIdHistoryRequestsResponseObject interface {
 	VisitPostApiV1ProjectsProjectIdHistoryRequestsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdHistoryRequests200JSONResponse Document
+type PostApiV1ProjectsProjectIdHistoryRequests202JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdHistoryRequests200JSONResponse) VisitPostApiV1ProjectsProjectIdHistoryRequestsResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdHistoryRequests202JSONResponse) VisitPostApiV1ProjectsProjectIdHistoryRequestsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5669,16 +5754,16 @@ type PostApiV1ProjectsProjectIdQueriesResponseObject interface {
 	VisitPostApiV1ProjectsProjectIdQueriesResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdQueries200JSONResponse Document
+type PostApiV1ProjectsProjectIdQueries202JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdQueries200JSONResponse) VisitPostApiV1ProjectsProjectIdQueriesResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdQueries202JSONResponse) VisitPostApiV1ProjectsProjectIdQueriesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5869,16 +5954,16 @@ type PostApiV1ProjectsProjectIdRepositoriesResponseObject interface {
 	VisitPostApiV1ProjectsProjectIdRepositoriesResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdRepositories200JSONResponse Document
+type PostApiV1ProjectsProjectIdRepositories201JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdRepositories200JSONResponse) VisitPostApiV1ProjectsProjectIdRepositoriesResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdRepositories201JSONResponse) VisitPostApiV1ProjectsProjectIdRepositoriesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6064,16 +6149,16 @@ type PostApiV1ProjectsProjectIdSourcesResponseObject interface {
 	VisitPostApiV1ProjectsProjectIdSourcesResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdSources200JSONResponse Document
+type PostApiV1ProjectsProjectIdSources201JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdSources200JSONResponse) VisitPostApiV1ProjectsProjectIdSourcesResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdSources201JSONResponse) VisitPostApiV1ProjectsProjectIdSourcesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6104,11 +6189,11 @@ type DeleteApiV1ProjectsProjectIdSourcesSourceIdResponseObject interface {
 	VisitDeleteApiV1ProjectsProjectIdSourcesSourceIdResponse(w http.ResponseWriter) error
 }
 
-type DeleteApiV1ProjectsProjectIdSourcesSourceId204Response struct {
+type DeleteApiV1ProjectsProjectIdSourcesSourceId202Response struct {
 }
 
-func (response DeleteApiV1ProjectsProjectIdSourcesSourceId204Response) VisitDeleteApiV1ProjectsProjectIdSourcesSourceIdResponse(w http.ResponseWriter) error {
-	w.WriteHeader(204)
+func (response DeleteApiV1ProjectsProjectIdSourcesSourceId202Response) VisitDeleteApiV1ProjectsProjectIdSourcesSourceIdResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
 	return nil
 }
 
@@ -6179,16 +6264,16 @@ type PostApiV1ProjectsProjectIdSyncsResponseObject interface {
 	VisitPostApiV1ProjectsProjectIdSyncsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdSyncs200JSONResponse Document
+type PostApiV1ProjectsProjectIdSyncs202JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdSyncs200JSONResponse) VisitPostApiV1ProjectsProjectIdSyncsResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdSyncs202JSONResponse) VisitPostApiV1ProjectsProjectIdSyncsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6260,16 +6345,16 @@ type PostApiV1ProjectsProjectIdTopicsTopicIdCorrectionsResponseObject interface 
 	VisitPostApiV1ProjectsProjectIdTopicsTopicIdCorrectionsResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdTopicsTopicIdCorrections200JSONResponse Document
+type PostApiV1ProjectsProjectIdTopicsTopicIdCorrections202JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdTopicsTopicIdCorrections200JSONResponse) VisitPostApiV1ProjectsProjectIdTopicsTopicIdCorrectionsResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdTopicsTopicIdCorrections202JSONResponse) VisitPostApiV1ProjectsProjectIdTopicsTopicIdCorrectionsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6300,16 +6385,16 @@ type PostApiV1ProjectsProjectIdTransitionResponseObject interface {
 	VisitPostApiV1ProjectsProjectIdTransitionResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1ProjectsProjectIdTransition200JSONResponse Document
+type PostApiV1ProjectsProjectIdTransition202JSONResponse Document
 
-func (response PostApiV1ProjectsProjectIdTransition200JSONResponse) VisitPostApiV1ProjectsProjectIdTransitionResponse(w http.ResponseWriter) error {
+func (response PostApiV1ProjectsProjectIdTransition202JSONResponse) VisitPostApiV1ProjectsProjectIdTransitionResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6452,16 +6537,16 @@ type PostApiV1RadarProjectIdOverrideResponseObject interface {
 	VisitPostApiV1RadarProjectIdOverrideResponse(w http.ResponseWriter) error
 }
 
-type PostApiV1RadarProjectIdOverride200JSONResponse Document
+type PostApiV1RadarProjectIdOverride201JSONResponse Document
 
-func (response PostApiV1RadarProjectIdOverride200JSONResponse) VisitPostApiV1RadarProjectIdOverrideResponse(w http.ResponseWriter) error {
+func (response PostApiV1RadarProjectIdOverride201JSONResponse) VisitPostApiV1RadarProjectIdOverrideResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6561,7 +6646,7 @@ type GetHealthResponseObject interface {
 	VisitGetHealthResponse(w http.ResponseWriter) error
 }
 
-type GetHealth200JSONResponse Document
+type GetHealth200JSONResponse Health
 
 func (response GetHealth200JSONResponse) VisitGetHealthResponse(w http.ResponseWriter) error {
 
@@ -6599,7 +6684,7 @@ type GetReadyResponseObject interface {
 	VisitGetReadyResponse(w http.ResponseWriter) error
 }
 
-type GetReady200JSONResponse Document
+type GetReady200JSONResponse Readiness
 
 func (response GetReady200JSONResponse) VisitGetReadyResponse(w http.ResponseWriter) error {
 

@@ -12,11 +12,20 @@ export type Document = {
 
 export type DependencyState = 'available' | 'unavailable' | 'degraded' | 'disabled';
 
+export type Health = {
+  status: 'ok';
+};
+
 export type Readiness = {
-  status: 'ready' | 'not-ready';
+  status: 'ready' | 'not_ready';
   dependencies: {
     [key: string]: DependencyState;
   };
+};
+
+export type FieldError = {
+  field: string;
+  code: string;
 };
 
 export type Problem = {
@@ -25,7 +34,9 @@ export type Problem = {
   status: number;
   detail?: string;
   code: string;
+  instance?: string;
   request_id: string;
+  errors?: Array<FieldError>;
 };
 
 export type GetHealthData = {
@@ -48,7 +59,7 @@ export type GetHealthResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  200: Health;
 };
 
 export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
@@ -73,7 +84,7 @@ export type GetReadyResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  200: Readiness;
 };
 
 export type GetReadyResponse = GetReadyResponses[keyof GetReadyResponses];
@@ -237,7 +248,7 @@ export type PostApiV1MeDeletionResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1MeDeletionResponse =
@@ -387,7 +398,7 @@ export type PostApiV1AdminServiceAccountsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  201: Document;
 };
 
 export type PostApiV1AdminServiceAccountsResponse =
@@ -562,7 +573,7 @@ export type PostApiV1ProjectsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ProjectsResponse =
@@ -649,7 +660,7 @@ export type PostApiV1ProjectsProjectIdTransitionResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ProjectsProjectIdTransitionResponse =
@@ -678,7 +689,7 @@ export type PostApiV1ProjectsProjectIdDeletionResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ProjectsProjectIdDeletionResponse =
@@ -739,7 +750,7 @@ export type PostApiV1ProjectsProjectIdRepositoriesResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  201: Document;
 };
 
 export type PostApiV1ProjectsProjectIdRepositoriesResponse =
@@ -862,7 +873,7 @@ export type PostApiV1ProjectsProjectIdSourcesResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  201: Document;
 };
 
 export type PostApiV1ProjectsProjectIdSourcesResponse =
@@ -892,11 +903,8 @@ export type DeleteApiV1ProjectsProjectIdSourcesSourceIdResponses = {
   /**
    * Completed without a response body
    */
-  204: void;
+  202: unknown;
 };
-
-export type DeleteApiV1ProjectsProjectIdSourcesSourceIdResponse =
-  DeleteApiV1ProjectsProjectIdSourcesSourceIdResponses[keyof DeleteApiV1ProjectsProjectIdSourcesSourceIdResponses];
 
 export type PatchApiV1ProjectsProjectIdSourcesSourceIdData = {
   body?: Document;
@@ -985,7 +993,7 @@ export type PostApiV1ProjectsProjectIdAssociationsAssociationIdCorrectionRespons
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ProjectsProjectIdAssociationsAssociationIdCorrectionResponse =
@@ -1014,7 +1022,7 @@ export type PostApiV1ProjectsProjectIdSyncsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ProjectsProjectIdSyncsResponse =
@@ -1043,7 +1051,7 @@ export type PostApiV1ProjectsProjectIdHistoryRequestsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ProjectsProjectIdHistoryRequestsResponse =
@@ -1163,7 +1171,7 @@ export type PostApiV1JobsJobIdCancellationResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1JobsJobIdCancellationResponse =
@@ -1389,7 +1397,7 @@ export type PostApiV1ComparisonsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  201: Document;
 };
 
 export type PostApiV1ComparisonsResponse =
@@ -1540,7 +1548,7 @@ export type PostApiV1PoliciesResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  201: Document;
 };
 
 export type PostApiV1PoliciesResponse =
@@ -1599,7 +1607,7 @@ export type PostApiV1PoliciesPolicyIdVersionsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  201: Document;
 };
 
 export type PostApiV1PoliciesPolicyIdVersionsResponse =
@@ -1715,7 +1723,7 @@ export type PostApiV1RadarProjectIdOverrideResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  201: Document;
 };
 
 export type PostApiV1RadarProjectIdOverrideResponse =
@@ -1778,7 +1786,7 @@ export type PostApiV1ProjectsProjectIdTopicsTopicIdCorrectionsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ProjectsProjectIdTopicsTopicIdCorrectionsResponse =
@@ -1869,7 +1877,7 @@ export type PostApiV1ProjectsProjectIdCrawlsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ProjectsProjectIdCrawlsResponse =
@@ -1927,7 +1935,7 @@ export type PostApiV1ProjectsProjectIdQueriesResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ProjectsProjectIdQueriesResponse =
@@ -1985,7 +1993,7 @@ export type PostApiV1AnalysisRunsRunIdRerunsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1AnalysisRunsRunIdRerunsResponse =
@@ -2014,7 +2022,7 @@ export type PostApiV1AnalysisRunsRunIdFeedbackResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  201: Document;
 };
 
 export type PostApiV1AnalysisRunsRunIdFeedbackResponse =
@@ -2099,7 +2107,7 @@ export type PostApiV1AlertRulesResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  201: Document;
 };
 
 export type PostApiV1AlertRulesResponse =
@@ -2212,7 +2220,7 @@ export type PostApiV1ExportsResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  202: Document;
 };
 
 export type PostApiV1ExportsResponse = PostApiV1ExportsResponses[keyof PostApiV1ExportsResponses];
