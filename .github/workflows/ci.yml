@@ -107,7 +107,28 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
       - run: go mod download
+
+      - name: Verify generated boundaries
+        run: |
+          make generate-check
+          make generate
+          git diff --exit-code -- \
+            api/openapi.yaml \
+            generated.sha256 \
+            internal/platform/database/sqlc \
+            internal/platform/httpapi/openapi.gen.go \
+            apps/web/src/api/generated
 
       - name: Verify formatting
         run: make fmt-check

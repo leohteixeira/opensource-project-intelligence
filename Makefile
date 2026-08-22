@@ -54,7 +54,33 @@ run-worker: ## Run the worker
 
 .PHONY: migrate
 migrate: ## Apply the SQL migrations
-	./scripts/migrate.sh
+	./scripts/migrate.sh up
+
+.PHONY: migrate-down
+migrate-down: ## Revert the latest SQL migration
+	./scripts/migrate.sh down
+
+.PHONY: generate
+generate: ## Regenerate HTTP, SQL, and TypeScript adapters
+	./scripts/generate.sh
+
+.PHONY: generate-check
+generate-check: ## Fail when reviewed sources or generated adapters drift
+	./scripts/check-generated.sh
+
+.PHONY: test-integration
+test-integration: $(GOTMPDIR) ## Run tests against the configured real services
+	@test -n "$(OPI_INTEGRATION_DATABASE_URL)" || \
+		(echo "OPI_INTEGRATION_DATABASE_URL is required"; exit 1)
+	go test -tags=integration ./...
+
+.PHONY: backup
+backup: ## Back up PostgreSQL and the canonical object manifest
+	./scripts/backup.sh
+
+.PHONY: restore
+restore: ## Restore PostgreSQL and verify the backup manifest
+	./scripts/restore.sh
 
 .PHONY: check
-check: fmt-check vet test-race build ## Everything CI runs for the Go side
+check: generate-check fmt-check vet test-race build ## Everything CI runs for the Go side
