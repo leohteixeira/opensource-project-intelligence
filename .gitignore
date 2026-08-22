@@ -17,5 +17,7 @@ coverage/
 
 # Tooling
 /.cache/
+/apps/web/playwright-report/
+/apps/web/test-results/
 .DS_Store
 *.log
