@@ -1,4 +1,4 @@
-import type { CSSProperties, ChangeEventHandler, ReactNode } from 'react';
+import type { CSSProperties, ChangeEventHandler, FocusEventHandler, ReactNode, Ref } from 'react';
 
 import { Icon } from '../core/Icon';
 import type { IconName } from '../core/icons';
@@ -15,6 +15,9 @@ export interface TextFieldProps {
   readonly defaultValue?: string;
   readonly placeholder?: string;
   readonly onChange?: ChangeEventHandler<HTMLInputElement>;
+  readonly onBlur?: FocusEventHandler<HTMLInputElement>;
+  readonly name?: string;
+  readonly ref?: Ref<HTMLInputElement>;
   readonly type?: 'text' | 'search' | 'url' | 'email' | 'number' | 'date';
   readonly mono?: boolean;
   readonly iconStart?: IconName;
@@ -37,6 +40,9 @@ export function TextField({
   defaultValue,
   placeholder,
   onChange,
+  onBlur,
+  name,
+  ref,
   type = 'text',
   mono,
   iconStart,
@@ -65,6 +71,9 @@ export function TextField({
         defaultValue={defaultValue}
         placeholder={placeholder}
         onChange={onChange}
+        onBlur={onBlur}
+        name={name}
+        ref={ref}
         disabled={disabled}
         readOnly={readOnly}
         inputMode={inputMode}

@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { z } from 'zod';
@@ -24,21 +25,29 @@ export function AccountScreen() {
   const { t } = useTranslation();
   const { session, locale } = useApplication();
   const navigate = useNavigate();
+  const savedDraft = readPreferencesDraft();
   const preferences = useForm<PreferencesValues>({
     resolver: zodResolver(preferencesSchema),
     defaultValues: {
-      locale: session.member?.locale === 'pt-BR' ? 'pt-BR' : 'en',
-      timezone: session.member?.timezone ?? 'UTC',
+      locale: savedDraft?.locale ?? (session.member?.locale === 'pt-BR' ? 'pt-BR' : 'en'),
+      timezone: savedDraft?.timezone ?? session.member?.timezone ?? 'UTC',
     },
   });
   const deletion = useForm<DeletionValues>({ resolver: zodResolver(deletionSchema) });
+  const preferenceDraft = useWatch({ control: preferences.control });
   const save = useMutation({
     mutationFn: (values: PreferencesValues) =>
       savePreferences(session, values.locale, values.timezone),
     onSuccess: (member) => {
+      clearPreferencesDraft();
       queryClient.setQueryData(['session'], { ...session, member });
     },
   });
+
+  useEffect(() => {
+    const parsed = preferencesSchema.safeParse(preferenceDraft);
+    if (parsed.success) writePreferencesDraft(parsed.data);
+  }, [preferenceDraft]);
   const remove = useMutation({
     mutationFn: (values: DeletionValues) => deleteAccount(session, values.confirmation),
     onSuccess: () => {
@@ -121,6 +130,34 @@ export function AccountScreen() {
       </Panel>
     </div>
   );
+}
+
+const preferencesDraftKey = 'opi.account.preferences-draft';
+
+function readPreferencesDraft(): PreferencesValues | undefined {
+  try {
+    const value: unknown = JSON.parse(window.sessionStorage.getItem(preferencesDraftKey) ?? 'null');
+    const parsed = preferencesSchema.safeParse(value);
+    return parsed.success ? parsed.data : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writePreferencesDraft(values: PreferencesValues) {
+  try {
+    window.sessionStorage.setItem(preferencesDraftKey, JSON.stringify(values));
+  } catch {
+    // Storage may be unavailable; the current in-memory form remains authoritative.
+  }
+}
+
+function clearPreferencesDraft() {
+  try {
+    window.sessionStorage.removeItem(preferencesDraftKey);
+  } catch {
+    // A completed request remains complete even when storage cleanup is unavailable.
+  }
 }
 
 function errorStatus(error: Error): number | undefined {
