@@ -58,10 +58,15 @@ export function HealthDimensions({
   return (
     <div style={{ display: 'grid', gap: 'var(--space-15)', ...style }}>
       <ul
+        className={
+          grid ? 'opi-health-dimensions opi-health-dimensions--grid' : 'opi-health-dimensions'
+        }
         style={{
           display: 'grid',
           gap: grid ? 'var(--space-1)' : 0,
           gridTemplateColumns: grid ? 'repeat(auto-fit, minmax(210px, 1fr))' : '1fr',
+          minWidth: 0,
+          width: '100%',
         }}
       >
         {list.map((dimension, index) => {
@@ -82,6 +87,7 @@ export function HealthDimensions({
                 borderRadius: grid ? 'var(--radius-xs)' : 0,
                 borderBottom:
                   !grid && index < list.length - 1 ? '1px solid var(--border-table)' : undefined,
+                minWidth: 0,
               }}
             >
               <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 1 }}>

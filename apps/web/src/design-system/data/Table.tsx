@@ -116,6 +116,8 @@ export function Table<Row>({
   return (
     <div
       className="opi-card"
+      tabIndex={0}
+      aria-label={caption ? `${caption} table region` : 'Scrollable table region'}
       style={{
         overflowX: 'auto',
         border: 'var(--border-default)',

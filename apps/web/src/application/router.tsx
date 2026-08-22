@@ -20,7 +20,26 @@ import { localePrefix, routePath, routeSegment, switchLocalePath, type RouteKey 
 import { AccountScreen } from './screens/AccountScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { CatalogScreen } from './screens/CatalogScreen';
+import {
+  ComparisonWorkspaceScreen,
+  ContributorIntelligenceScreen,
+  ProjectHealthScreen,
+} from './screens/IntelligenceScreen';
+import {
+  AdoptionSecurityIntelligenceScreen,
+  AnalysisRunIntelligenceScreen,
+  KnowledgeIntelligenceScreen,
+  ReleaseIntelligenceScreen,
+  TopicIntelligenceScreen,
+} from './screens/ExtendedIntelligenceScreen';
 import { ProjectScreen } from './screens/ProjectScreen';
+import {
+  AlertsGovernanceScreen,
+  PoliciesGovernanceScreen,
+  RadarGovernanceScreen,
+  TrendRecommendationScreen,
+} from './screens/GovernanceScreen';
+import { PortfolioScreen, ProjectsScreen, WorkspaceProjectScreen } from './screens/WorkspaceScreen';
 
 export interface ApplicationContext {
   locale: Locale;
@@ -55,6 +74,122 @@ function localizedRoutes(locale: Locale) {
       { index: true, loader: () => redirect(routePath(locale, 'catalog')) },
       { path: routeSegment(locale, 'catalog'), element: <CatalogScreen /> },
       { path: routeSegment(locale, 'project'), element: <ProjectScreen /> },
+      {
+        path: routeSegment(locale, 'portfolio'),
+        element: (
+          <Protected required="member">
+            <PortfolioScreen />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'projects'),
+        element: (
+          <Protected required="member">
+            <ProjectsScreen />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'workspaceProject'),
+        element: (
+          <Protected required="member">
+            <WorkspaceProjectScreen />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'projectSources'),
+        element: (
+          <Protected required="member">
+            <WorkspaceProjectScreen section="sources" />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'projectJobs'),
+        element: (
+          <Protected required="member">
+            <WorkspaceProjectScreen section="jobs" />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'projectLifecycle'),
+        element: (
+          <Protected required="member">
+            <WorkspaceProjectScreen section="lifecycle" />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'projectHealth'),
+        element: (
+          <Protected required="member">
+            <ProjectHealthScreen />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'projectContributors'),
+        element: (
+          <Protected required="member">
+            <ContributorIntelligenceScreen />
+          </Protected>
+        ),
+      },
+      ...(
+        [
+          ['projectAdoptionSecurity', <AdoptionSecurityIntelligenceScreen />],
+          ['projectTopics', <TopicIntelligenceScreen />],
+          ['projectReleases', <ReleaseIntelligenceScreen />],
+          ['projectKnowledge', <KnowledgeIntelligenceScreen />],
+          ['analysisRun', <AnalysisRunIntelligenceScreen />],
+        ] as const
+      ).map(([key, element]) => ({
+        path: routeSegment(locale, key),
+        element: <Protected required="member">{element}</Protected>,
+      })),
+      {
+        path: routeSegment(locale, 'projectTrends'),
+        element: (
+          <Protected required="member">
+            <TrendRecommendationScreen />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'compare'),
+        element: (
+          <Protected required="member">
+            <ComparisonWorkspaceScreen />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'comparison'),
+        element: (
+          <Protected required="member">
+            <ComparisonWorkspaceScreen />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'radar'),
+        element: (
+          <Protected required="member">
+            <RadarGovernanceScreen />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'alerts'),
+        element: (
+          <Protected required="member">
+            <AlertsGovernanceScreen />
+          </Protected>
+        ),
+      },
       { path: routeSegment(locale, 'access'), element: <AccessScreen /> },
       {
         path: routeSegment(locale, 'account'),
@@ -96,6 +231,14 @@ function localizedRoutes(locale: Locale) {
           </Protected>
         ),
       },
+      {
+        path: routeSegment(locale, 'policies'),
+        element: (
+          <Protected required="admin">
+            <PoliciesGovernanceScreen />
+          </Protected>
+        ),
+      },
       { path: '*', element: <NotFound locale={locale} /> },
     ],
   };
@@ -129,6 +272,31 @@ function LocalizedShell({ locale }: { locale: Locale }) {
   const isMember = session.state === 'active';
   const nav = [
     { key: 'catalog', label: t('catalog'), icon: 'search' as const },
+    ...(isMember
+      ? [
+          {
+            key: 'portfolio',
+            label: locale === 'pt-BR' ? 'Portfólio' : 'Portfolio',
+            icon: 'layout-dashboard' as const,
+          },
+          {
+            key: 'projects',
+            label: locale === 'pt-BR' ? 'Projetos' : 'Projects',
+            icon: 'package' as const,
+          },
+          {
+            key: 'compare',
+            label: locale === 'pt-BR' ? 'Comparar' : 'Compare',
+            icon: 'table-2' as const,
+          },
+          { key: 'radar', label: 'Radar', icon: 'radar' as const },
+          {
+            key: 'alerts',
+            label: locale === 'pt-BR' ? 'Alertas' : 'Alerts',
+            icon: 'bell' as const,
+          },
+        ]
+      : []),
     ...(isMember ? [{ key: 'account', label: t('account'), icon: 'user-cog' as const }] : []),
   ];
   const adminNav = isAdmin
@@ -137,6 +305,11 @@ function LocalizedShell({ locale }: { locale: Locale }) {
         { key: 'serviceAccounts', label: t('serviceAccounts'), icon: 'user-cog' as const },
         { key: 'audit', label: t('audit'), icon: 'file-text' as const },
         { key: 'operations', label: t('operations'), icon: 'activity' as const },
+        {
+          key: 'policies',
+          label: locale === 'pt-BR' ? 'Políticas' : 'Policies',
+          icon: 'file-text' as const,
+        },
       ]
     : [];
 
@@ -285,6 +458,16 @@ function activeRoute(pathname: string, locale: Locale): string {
     'audit',
     'operations',
     'account',
+    'projectLifecycle',
+    'projectHealth',
+    'projectContributors',
+    'comparison',
+    'compare',
+    'projectSources',
+    'projectJobs',
+    'workspaceProject',
+    'projects',
+    'portfolio',
     'catalog',
   ] as RouteKey[]) {
     if (pathname.startsWith(routePath(locale, key))) return key;

@@ -7,6 +7,56 @@
   box-sizing: border-box;
 }
 
+.opi-intelligence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-2);
+}
+
+.opi-intelligence-card {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.opi-intelligence-meta {
+  color: var(--text-secondary);
+  font: var(--type-mono-xs);
+  overflow-wrap: anywhere;
+}
+
+.opi-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.opi-definition-grid {
+  display: grid;
+  grid-template-columns: minmax(100px, auto) minmax(0, 1fr);
+  gap: var(--space-1) var(--space-2);
+}
+
+.opi-definition-grid > dt,
+.opi-definition-grid > dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.opi-output-json {
+  max-width: 100%;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
@@ -368,6 +418,12 @@ a:active {
 .opi-card--interactive:hover {
   box-shadow: var(--shadow-card-hover);
   border-color: var(--gray-200);
+}
+
+@media (max-width: 520px) {
+  .opi-health-dimensions--grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
 }
 
 /* Segmented control — filter tabs with counts. */

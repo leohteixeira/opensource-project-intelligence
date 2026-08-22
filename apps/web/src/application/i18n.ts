@@ -102,6 +102,10 @@ export const en = {
   page: 'Page',
   localeEnglish: 'English',
   localePortuguese: 'Português (Brasil)',
+  trendsTitle: 'Trends and adoption recommendation',
+  policiesTitle: 'Adoption policies',
+  radarTitle: 'Technology radar',
+  alertsTitle: 'Shared alerts',
 };
 
 export const ptBR: Record<keyof typeof en, string> = {
@@ -206,6 +210,10 @@ export const ptBR: Record<keyof typeof en, string> = {
   page: 'Página',
   localeEnglish: 'English',
   localePortuguese: 'Português (Brasil)',
+  trendsTitle: 'Tendências e recomendação de adoção',
+  policiesTitle: 'Políticas de adoção',
+  radarTitle: 'Radar de tecnologia',
+  alertsTitle: 'Alertas compartilhados',
 };
 
 void i18n

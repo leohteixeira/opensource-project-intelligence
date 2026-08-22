@@ -151,6 +151,7 @@ export function ComparisonMatrix({
                         >
                           {isBest ? (
                             <span
+                              role="img"
                               aria-label="best in this comparison"
                               style={{
                                 width: 5,
