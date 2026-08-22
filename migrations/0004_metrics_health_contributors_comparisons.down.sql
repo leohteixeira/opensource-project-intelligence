@@ -1,0 +1,17 @@
+DROP TABLE IF EXISTS pull_request_readiness_events;
+DROP TABLE IF EXISTS issue_state_events;
+DROP TABLE IF EXISTS issue_response_events;
+DROP TABLE IF EXISTS comparison_items;
+DROP TABLE IF EXISTS comparisons;
+DROP TABLE IF EXISTS contributor_snapshots;
+DROP TABLE IF EXISTS contributor_identity_corrections;
+DROP TABLE IF EXISTS contributor_identity_links;
+DROP TABLE IF EXISTS contributor_accounts;
+DROP TABLE IF EXISTS contributor_identities;
+DROP TABLE IF EXISTS health_dimension_factors;
+DROP TABLE IF EXISTS health_dimensions;
+DROP TABLE IF EXISTS health_snapshots;
+DROP TABLE IF EXISTS health_definitions;
+DROP TABLE IF EXISTS metric_factors;
+DROP TABLE IF EXISTS metric_snapshots;
+DROP TABLE IF EXISTS metric_definitions;

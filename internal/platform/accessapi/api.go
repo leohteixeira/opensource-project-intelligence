@@ -106,6 +106,23 @@ func Routes(handler *Handler) http.Handler {
 	return handler.requestMiddleware(mux)
 }
 
+// Middleware authenticates the request and attaches the locally authorized
+// principal. Capability handlers use it so every versioned route shares the
+// same session, bearer-token, CSRF, request-ID, and audit boundary.
+func (h *Handler) Middleware(next http.Handler) http.Handler {
+	return h.requestMiddleware(next)
+}
+
+// Principal returns the local principal resolved by Middleware.
+func Principal(ctx context.Context) access.Principal {
+	return authFrom(ctx).principal
+}
+
+// RequestID returns the correlation identifier established by Middleware.
+func RequestID(ctx context.Context) string {
+	return requestID(ctx)
+}
+
 func (h *Handler) GetApiV1CatalogProjects(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -581,14 +598,45 @@ func (h *Handler) requestMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'")
 		request = request.WithContext(context.WithValue(request.Context(), authKey{}, h.authenticate(request)))
 		state := authFrom(request.Context())
+		writer := &statusWriter{ResponseWriter: w, status: http.StatusOK}
+		if isUnsafe(request.Method) && strings.HasPrefix(request.URL.Path, "/api/") {
+			defer func() {
+				auditCtx, cancel := context.WithTimeout(context.WithoutCancel(request.Context()), 2*time.Second)
+				defer cancel()
+				if err := h.store.RecordHTTPMutation(auditCtx, state.principal, request.Method,
+					request.URL.Path, writer.status, requestID(request.Context())); err != nil {
+					h.logger.Warn("record HTTP mutation audit", slog.Any("error", err))
+				}
+			}()
+		}
 		if isUnsafe(request.Method) && state.cookie && strings.HasPrefix(request.URL.Path, "/api/") {
 			if err := h.validateBrowserMutation(request, state.session); err != nil {
-				h.problem(w, request, err)
+				h.problem(writer, request, err)
 				return
 			}
 		}
-		h.serveIdempotent(w, request, next)
+		h.serveIdempotent(writer, request, next)
 	})
+}
+
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (writer *statusWriter) WriteHeader(status int) {
+	writer.status = status
+	writer.ResponseWriter.WriteHeader(status)
+}
+
+func (writer *statusWriter) Write(body []byte) (int, error) {
+	return writer.ResponseWriter.Write(body)
+}
+
+func (writer *statusWriter) Flush() {
+	if flusher, ok := writer.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
 }
 
 func (h *Handler) authenticate(r *http.Request) authState {
@@ -927,7 +975,8 @@ func requiresIdempotency(method, path string) bool {
 		return false
 	}
 	return path == "/api/v1/me/deletion" || path == "/api/v1/admin/service-accounts" ||
-		strings.HasSuffix(path, "/approval")
+		path == "/api/v1/projects" || strings.HasPrefix(path, "/api/v1/projects/") ||
+		strings.HasPrefix(path, "/api/v1/jobs/") || strings.HasSuffix(path, "/approval")
 }
 
 func clientAddress(r *http.Request) string {

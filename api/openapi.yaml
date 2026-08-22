@@ -392,11 +392,13 @@ paths:
           required: false
           schema:
             type: string
+            description: Preset 30d, 90d, 180d, 365d or half-open YYYY-MM-DD/YYYY-MM-DD interval.
         - name: cutoff
           in: query
           required: false
           schema:
             type: string
+            format: date-time
       responses:
         '200':
           description: Successful contract response
@@ -1073,7 +1075,7 @@ paths:
           required: true
           schema:
             type: string
-            pattern: '^[0-9]+$'
+            pattern: '^[a-z][a-z0-9_]*$'
         - name: window
           in: query
           required: false

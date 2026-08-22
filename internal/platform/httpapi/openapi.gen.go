@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/oapi-codegen/runtime"
 )
@@ -167,8 +168,8 @@ type GetApiV1PoliciesParams struct {
 
 // GetApiV1PortfolioParams defines parameters for GetApiV1Portfolio.
 type GetApiV1PortfolioParams struct {
-	Window *string `form:"window,omitempty" json:"window,omitempty"`
-	Cutoff *string `form:"cutoff,omitempty" json:"cutoff,omitempty"`
+	Window *string    `form:"window,omitempty" json:"window,omitempty"`
+	Cutoff *time.Time `form:"cutoff,omitempty" json:"cutoff,omitempty"`
 }
 
 // GetApiV1ProjectsParams defines parameters for GetApiV1Projects.
@@ -1765,7 +1766,7 @@ func (siw *ServerInterfaceWrapper) GetApiV1Portfolio(w http.ResponseWriter, r *h
 
 	// ------------- Optional query parameter "cutoff" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "cutoff", r.URL.Query(), &params.Cutoff, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cutoff", r.URL.Query(), &params.Cutoff, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {

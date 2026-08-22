@@ -54,6 +54,15 @@ type Config struct {
 	S3AccessKey          string
 	S3SecretKey          string
 
+	// GitHubToken is an optional credential for authenticated GitHub API
+	// collection. It is read once and never logged.
+	GitHubToken string
+
+	// AIProvider and AIModel identify the operator-selected model capability.
+	// Credentials remain adapter-owned and are never accepted from an end user.
+	AIProvider string
+	AIModel    string
+
 	// ValkeyEnabled enables disposable acceleration state.
 	ValkeyEnabled bool
 	ValkeyURL     string
@@ -95,6 +104,9 @@ func Load(serviceName string, lookup func(string) (string, bool)) (Config, error
 		S3Bucket:    strings.TrimSpace(stringOrDefault(lookup, "S3_BUCKET", "")),
 		S3AccessKey: stringOrDefault(lookup, "S3_ACCESS_KEY", ""),
 		S3SecretKey: stringOrDefault(lookup, "S3_SECRET_KEY", ""),
+		GitHubToken: stringOrDefault(lookup, "GITHUB_TOKEN", ""),
+		AIProvider:  strings.TrimSpace(stringOrDefault(lookup, "AI_PROVIDER", "")),
+		AIModel:     strings.TrimSpace(stringOrDefault(lookup, "AI_MODEL", "")),
 		ValkeyURL:   strings.TrimSpace(stringOrDefault(lookup, "VALKEY_URL", "")),
 		PublicBaseURL: strings.TrimSpace(stringOrDefault(
 			lookup, "PUBLIC_BASE_URL", "http://localhost:8100")),
@@ -136,6 +148,8 @@ func Load(serviceName string, lookup func(string) (string, bool)) (Config, error
 
 	if cfg.JetStreamEnabled && cfg.NATSURL == "" {
 		problems = append(problems, "NATS_URL is required when JETSTREAM_ENABLED is true")
+	} else if cfg.JetStreamEnabled && !absoluteEndpoint(cfg.NATSURL, "nats", "tls") {
+		problems = append(problems, "NATS_URL must be an absolute nats:// or tls:// URL")
 	}
 	if cfg.ObjectStorageEnabled {
 		fields := []struct {
@@ -152,9 +166,17 @@ func Load(serviceName string, lookup func(string) (string, bool)) (Config, error
 				problems = append(problems, field.name+" is required when OBJECT_STORAGE_ENABLED is true")
 			}
 		}
+		if cfg.S3Endpoint != "" && !absoluteEndpoint(cfg.S3Endpoint, "http", "https") {
+			problems = append(problems, "S3_ENDPOINT must be an absolute HTTP(S) URL")
+		}
 	}
 	if cfg.ValkeyEnabled && cfg.ValkeyURL == "" {
 		problems = append(problems, "VALKEY_URL is required when VALKEY_ENABLED is true")
+	} else if cfg.ValkeyEnabled && !absoluteEndpoint(cfg.ValkeyURL, "valkey", "redis", "rediss") {
+		problems = append(problems, "VALKEY_URL must be an absolute valkey://, redis://, or rediss:// URL")
+	}
+	if (cfg.AIProvider == "") != (cfg.AIModel == "") {
+		problems = append(problems, "AI_PROVIDER and AI_MODEL must be configured together")
 	}
 	publicURL, parseErr := url.Parse(cfg.PublicBaseURL)
 	if parseErr != nil || publicURL.Host == "" || publicURL.Scheme == "" {
@@ -249,4 +271,17 @@ func boolOrDefault(
 		return false, fmt.Errorf("%s must be true or false", key)
 	}
 	return value, nil
+}
+
+func absoluteEndpoint(raw string, schemes ...string) bool {
+	value, err := url.Parse(raw)
+	if err != nil || value.Hostname() == "" {
+		return false
+	}
+	for _, scheme := range schemes {
+		if value.Scheme == scheme {
+			return true
+		}
+	}
+	return false
 }

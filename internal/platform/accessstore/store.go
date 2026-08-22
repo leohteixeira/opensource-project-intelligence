@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -874,6 +875,45 @@ func (s *Store) appendAudit(
 		action, resourceType, resourceID, outcome, requestID, encoded)
 	if err != nil {
 		return fmt.Errorf("append audit event: %w", err)
+	}
+	return nil
+}
+
+// RecordHTTPMutation appends the transport outcome without retaining request
+// bodies, credentials, query strings, or response payloads. Domain audit rows
+// remain the detailed successful command record; this boundary row proves that
+// denied, stale, and failed attempts are also attributable and immutable.
+func (s *Store) RecordHTTPMutation(
+	ctx context.Context,
+	actor access.Principal,
+	method, path string,
+	status int,
+	requestID string,
+) error {
+	if actor.Kind == "" {
+		actor.Kind = access.ActorSystem
+	}
+	outcome := "succeeded"
+	switch {
+	case status == http.StatusUnauthorized || status == http.StatusForbidden:
+		outcome = "denied"
+	case status == http.StatusConflict || status == http.StatusPreconditionFailed ||
+		status == http.StatusPreconditionRequired:
+		outcome = "stale"
+	case status >= http.StatusBadRequest:
+		outcome = "failed"
+	}
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("begin HTTP mutation audit: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if err := s.appendAudit(ctx, tx, actor, strings.ToLower(method)+" "+path,
+		"http_route", 0, outcome, requestID, map[string]any{"status": status}); err != nil {
+		return err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit HTTP mutation audit: %w", err)
 	}
 	return nil
 }

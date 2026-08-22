@@ -26,8 +26,13 @@ import (
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/health"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/httpx"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/id"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/intelligenceapi"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/intelligencestore"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/oidc"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/projectapi"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/projectstore"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/telemetry"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/valkey"
 )
 
 const serviceName = "opensource-project-intelligence-api"
@@ -140,6 +145,32 @@ func routes(ctx context.Context, logger *slog.Logger, pool *database.Pool, cfg c
 		return nil, err
 	}
 	accessRoutes := accessapi.Routes(accessHandler)
+	projects, err := projectapi.New(projectstore.New(pool, ids), cursors, logger)
+	if err != nil {
+		return nil, err
+	}
+	var acceleration *valkey.Client
+	if cfg.ValkeyEnabled {
+		acceleration, err = valkey.New(cfg.ValkeyURL)
+		if err != nil {
+			return nil, err
+		}
+		if err := projects.UseWakeups(acceleration); err != nil {
+			return nil, err
+		}
+	}
+	projectRoutes := accessHandler.Middleware(projectapi.Routes(projects))
+	intelligenceOptions := make([]intelligenceapi.Option, 0, 1)
+	if cfg.AIProvider != "" {
+		intelligenceOptions = append(intelligenceOptions, intelligenceapi.WithModelIdentity(
+			intelligenceapi.ModelIdentity{Provider: cfg.AIProvider, Model: cfg.AIModel}))
+	}
+	intelligence, err := intelligenceapi.New(intelligencestore.New(pool, ids), ids, logger,
+		intelligenceOptions...)
+	if err != nil {
+		return nil, err
+	}
+	intelligenceRoutes := accessHandler.Middleware(intelligenceapi.Routes(intelligence))
 
 	// Liveness: the process is up. It never touches a dependency.
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
@@ -170,7 +201,7 @@ func routes(ctx context.Context, logger *slog.Logger, pool *database.Pool, cfg c
 		}
 		if cfg.ValkeyEnabled {
 			dependencies = append(dependencies, health.Dependency{
-				Name: "valkey", Importance: health.Optional, State: dependencyState(health.TCP(ctx, cfg.ValkeyURL)),
+				Name: "valkey", Importance: health.Optional, State: dependencyState(acceleration.Ping(ctx)),
 			})
 		} else {
 			dependencies = append(dependencies, health.Dependency{Name: "valkey", Importance: health.Optional, State: health.Disabled})
@@ -194,6 +225,28 @@ func routes(ctx context.Context, logger *slog.Logger, pool *database.Pool, cfg c
 	for _, prefix := range []string{"/api/v1/catalog/", "/api/v1/session", "/api/v1/session/", "/api/v1/me/", "/api/v1/admin/", "/auth/"} {
 		mux.Handle(prefix, accessRoutes)
 	}
+	for _, prefix := range []string{"/api/v1/portfolio", "/api/v1/projects", "/api/v1/projects/", "/api/v1/jobs/"} {
+		mux.Handle(prefix, projectRoutes)
+	}
+	mux.Handle("/api/v1/comparisons", intelligenceRoutes)
+	mux.Handle("/api/v1/comparisons/", intelligenceRoutes)
+	for _, suffix := range []string{"/metrics", "/health", "/contributors", "/adoption", "/security",
+		"/topics", "/releases", "/crawls", "/knowledge/search", "/queries", "/trends", "/recommendation"} {
+		mux.Handle("/api/v1/projects/{project_id}"+suffix, intelligenceRoutes)
+	}
+	mux.Handle("/api/v1/projects/{project_id}/metrics/", intelligenceRoutes)
+	mux.Handle("/api/v1/projects/{project_id}/topics/", intelligenceRoutes)
+	mux.Handle("/api/v1/projects/{project_id}/releases/", intelligenceRoutes)
+	mux.Handle("/api/v1/analysis-runs/", intelligenceRoutes)
+	mux.Handle("/api/v1/analysis-series/", intelligenceRoutes)
+	mux.Handle("/api/v1/policies", intelligenceRoutes)
+	mux.Handle("/api/v1/policies/", intelligenceRoutes)
+	mux.Handle("/api/v1/radar", intelligenceRoutes)
+	mux.Handle("/api/v1/radar/", intelligenceRoutes)
+	mux.Handle("/api/v1/alert-rules", intelligenceRoutes)
+	mux.Handle("/api/v1/alert-rules/", intelligenceRoutes)
+	mux.Handle("/api/v1/alerts", intelligenceRoutes)
+	mux.Handle("/api/v1/alerts/", intelligenceRoutes)
 
 	return mux, nil
 }

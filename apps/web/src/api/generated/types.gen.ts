@@ -498,6 +498,9 @@ export type GetApiV1PortfolioData = {
   body?: never;
   path?: never;
   query?: {
+    /**
+     * Preset 30d, 90d, 180d, 365d or half-open YYYY-MM-DD/YYYY-MM-DD interval.
+     */
     window?: string;
     cutoff?: string;
   };
