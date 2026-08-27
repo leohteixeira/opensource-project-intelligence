@@ -61,7 +61,7 @@ migrate-down: ## Revert the latest SQL migration
 	./scripts/migrate.sh down
 
 .PHONY: generate
-generate: ## Regenerate HTTP, SQL, and TypeScript adapters
+generate: $(GOTMPDIR) ## Regenerate HTTP, SQL, and TypeScript adapters
 	./scripts/generate.sh
 
 .PHONY: generate-check
