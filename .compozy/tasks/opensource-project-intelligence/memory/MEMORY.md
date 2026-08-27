@@ -66,3 +66,11 @@
   suite, frontend lint/typecheck/93 unit tests/build, formatting and Markdown checks, and all 11
   assigned Playwright/axe journeys. Required S11, S16, S17, S18, and S20 narrow/wide artifacts are
   present under `artifacts/task_05/ui/`.
+- Task 06 is complete with deterministic observed Theil-Sen/Mann-Kendall trends, separately
+  versioned and backtested forecasts, immutable typed policies, exactly four recommendation
+  outcomes, policy-derived radar suggestions with attributed override history, and deduplicated
+  shared alert lifecycles independent from per-member read state.
+- Task 06 completion has fresh evidence from `make check`, the full real-PostgreSQL integration
+  suite, frontend lint/typecheck/93 unit tests/build, formatting and Markdown checks, and all nine
+  assigned Playwright/axe journeys. Required S13, S14, S15, and S21 narrow/wide artifacts are
+  present under `artifacts/task_06/ui/`.
