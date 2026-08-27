@@ -384,6 +384,11 @@ The original evidence language is retained. A generated translation returns
 
 ### Assistant actions
 
+| Method and path                                               | Request                                   | Success                                    |
+| ------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------ |
+| `POST /api/v1/assistant/proposals`                            | message plus `Idempotency-Key`            | `201` typed proposal awaiting confirmation |
+| `POST /api/v1/assistant/proposals/{proposal_id}/confirmation` | confirmation token plus `Idempotency-Key` | `201` exact proposal execution receipt     |
+
 ```http
 POST /api/v1/assistant/proposals HTTP/1.1
 Content-Type: application/json

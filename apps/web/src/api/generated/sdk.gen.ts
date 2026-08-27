@@ -168,6 +168,12 @@ import type {
   PostApiV1AnalysisSeriesSeriesIdSelectionData,
   PostApiV1AnalysisSeriesSeriesIdSelectionErrors,
   PostApiV1AnalysisSeriesSeriesIdSelectionResponses,
+  PostApiV1AssistantProposalsData,
+  PostApiV1AssistantProposalsErrors,
+  PostApiV1AssistantProposalsProposalIdConfirmationData,
+  PostApiV1AssistantProposalsProposalIdConfirmationErrors,
+  PostApiV1AssistantProposalsProposalIdConfirmationResponses,
+  PostApiV1AssistantProposalsResponses,
   PostApiV1ComparisonsData,
   PostApiV1ComparisonsErrors,
   PostApiV1ComparisonsResponses,
@@ -1357,6 +1363,48 @@ export const postApiV1AlertsAlertIdTransition = <ThrowOnError extends boolean = 
     ThrowOnError
   >({
     url: '/api/v1/alerts/{alert_id}/transition',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiV1AssistantProposals = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiV1AssistantProposalsData, ThrowOnError>,
+): RequestResult<
+  PostApiV1AssistantProposalsResponses,
+  PostApiV1AssistantProposalsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiV1AssistantProposalsResponses,
+    PostApiV1AssistantProposalsErrors,
+    ThrowOnError
+  >({
+    url: '/api/v1/assistant/proposals',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const postApiV1AssistantProposalsProposalIdConfirmation = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<PostApiV1AssistantProposalsProposalIdConfirmationData, ThrowOnError>,
+): RequestResult<
+  PostApiV1AssistantProposalsProposalIdConfirmationResponses,
+  PostApiV1AssistantProposalsProposalIdConfirmationErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PostApiV1AssistantProposalsProposalIdConfirmationResponses,
+    PostApiV1AssistantProposalsProposalIdConfirmationErrors,
+    ThrowOnError
+  >({
+    url: '/api/v1/assistant/proposals/{proposal_id}/confirmation',
     ...options,
     headers: {
       'Content-Type': 'application/json',

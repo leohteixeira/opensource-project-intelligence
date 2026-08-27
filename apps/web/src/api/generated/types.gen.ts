@@ -2203,6 +2203,68 @@ export type PostApiV1AlertsAlertIdTransitionResponses = {
 export type PostApiV1AlertsAlertIdTransitionResponse =
   PostApiV1AlertsAlertIdTransitionResponses[keyof PostApiV1AlertsAlertIdTransitionResponses];
 
+export type PostApiV1AssistantProposalsData = {
+  body: Document;
+  headers: {
+    'Idempotency-Key': string;
+  };
+  path?: never;
+  query?: never;
+  url: '/api/v1/assistant/proposals';
+};
+
+export type PostApiV1AssistantProposalsErrors = {
+  /**
+   * A safe RFC 9457 problem response
+   */
+  default: Problem;
+};
+
+export type PostApiV1AssistantProposalsError =
+  PostApiV1AssistantProposalsErrors[keyof PostApiV1AssistantProposalsErrors];
+
+export type PostApiV1AssistantProposalsResponses = {
+  /**
+   * One typed action awaiting explicit confirmation
+   */
+  201: Document;
+};
+
+export type PostApiV1AssistantProposalsResponse =
+  PostApiV1AssistantProposalsResponses[keyof PostApiV1AssistantProposalsResponses];
+
+export type PostApiV1AssistantProposalsProposalIdConfirmationData = {
+  body: Document;
+  headers: {
+    'Idempotency-Key': string;
+  };
+  path: {
+    proposal_id: string;
+  };
+  query?: never;
+  url: '/api/v1/assistant/proposals/{proposal_id}/confirmation';
+};
+
+export type PostApiV1AssistantProposalsProposalIdConfirmationErrors = {
+  /**
+   * A safe RFC 9457 problem response
+   */
+  default: Problem;
+};
+
+export type PostApiV1AssistantProposalsProposalIdConfirmationError =
+  PostApiV1AssistantProposalsProposalIdConfirmationErrors[keyof PostApiV1AssistantProposalsProposalIdConfirmationErrors];
+
+export type PostApiV1AssistantProposalsProposalIdConfirmationResponses = {
+  /**
+   * The exact proposal execution receipt
+   */
+  201: Document;
+};
+
+export type PostApiV1AssistantProposalsProposalIdConfirmationResponse =
+  PostApiV1AssistantProposalsProposalIdConfirmationResponses[keyof PostApiV1AssistantProposalsProposalIdConfirmationResponses];
+
 export type PostApiV1ExportsData = {
   body?: Document;
   path?: never;

@@ -152,6 +152,16 @@ type GetApiV1AlertsParams struct {
 	Limit   *int32  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// PostApiV1AssistantProposalsParams defines parameters for PostApiV1AssistantProposals.
+type PostApiV1AssistantProposalsParams struct {
+	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// PostApiV1AssistantProposalsProposalIdConfirmationParams defines parameters for PostApiV1AssistantProposalsProposalIdConfirmation.
+type PostApiV1AssistantProposalsProposalIdConfirmationParams struct {
+	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
 // GetApiV1CatalogProjectsParams defines parameters for GetApiV1CatalogProjects.
 type GetApiV1CatalogProjectsParams struct {
 	Q      *string `form:"q,omitempty" json:"q,omitempty"`
@@ -318,6 +328,12 @@ type PostApiV1AnalysisRunsRunIdRerunsJSONRequestBody = Document
 // PostApiV1AnalysisSeriesSeriesIdSelectionJSONRequestBody defines body for PostApiV1AnalysisSeriesSeriesIdSelection for application/json ContentType.
 type PostApiV1AnalysisSeriesSeriesIdSelectionJSONRequestBody = Document
 
+// PostApiV1AssistantProposalsJSONRequestBody defines body for PostApiV1AssistantProposals for application/json ContentType.
+type PostApiV1AssistantProposalsJSONRequestBody = Document
+
+// PostApiV1AssistantProposalsProposalIdConfirmationJSONRequestBody defines body for PostApiV1AssistantProposalsProposalIdConfirmation for application/json ContentType.
+type PostApiV1AssistantProposalsProposalIdConfirmationJSONRequestBody = Document
+
 // PostApiV1ComparisonsJSONRequestBody defines body for PostApiV1Comparisons for application/json ContentType.
 type PostApiV1ComparisonsJSONRequestBody = Document
 
@@ -446,6 +462,12 @@ type ServerInterface interface {
 
 	// (POST /api/v1/analysis-series/{series_id}/selection)
 	PostApiV1AnalysisSeriesSeriesIdSelection(w http.ResponseWriter, r *http.Request, seriesId string)
+
+	// (POST /api/v1/assistant/proposals)
+	PostApiV1AssistantProposals(w http.ResponseWriter, r *http.Request, params PostApiV1AssistantProposalsParams)
+
+	// (POST /api/v1/assistant/proposals/{proposal_id}/confirmation)
+	PostApiV1AssistantProposalsProposalIdConfirmation(w http.ResponseWriter, r *http.Request, proposalId string, params PostApiV1AssistantProposalsProposalIdConfirmationParams)
 
 	// (GET /api/v1/catalog/projects)
 	GetApiV1CatalogProjects(w http.ResponseWriter, r *http.Request, params GetApiV1CatalogProjectsParams)
@@ -1267,6 +1289,105 @@ func (siw *ServerInterfaceWrapper) PostApiV1AnalysisSeriesSeriesIdSelection(w ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostApiV1AnalysisSeriesSeriesIdSelection(w, r, seriesId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostApiV1AssistantProposals operation middleware
+func (siw *ServerInterfaceWrapper) PostApiV1AssistantProposals(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostApiV1AssistantProposalsParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Idempotency-Key", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Idempotency-Key", Err: err})
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		err := fmt.Errorf("Header parameter Idempotency-Key is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "Idempotency-Key", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostApiV1AssistantProposals(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostApiV1AssistantProposalsProposalIdConfirmation operation middleware
+func (siw *ServerInterfaceWrapper) PostApiV1AssistantProposalsProposalIdConfirmation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "proposal_id" -------------
+	var proposalId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "proposal_id", r.PathValue("proposal_id"), &proposalId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "proposal_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostApiV1AssistantProposalsProposalIdConfirmationParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Idempotency-Key", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Idempotency-Key", Err: err})
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		err := fmt.Errorf("Header parameter Idempotency-Key is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "Idempotency-Key", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostApiV1AssistantProposalsProposalIdConfirmation(w, r, proposalId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3726,6 +3847,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/alert-rules/{rule_id}", wrapper.PatchApiV1AlertRulesRuleId)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/alerts/{alert_id}/read", wrapper.PostApiV1AlertsAlertIdRead)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/alerts/{alert_id}/transition", wrapper.PostApiV1AlertsAlertIdTransition)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/assistant/proposals", wrapper.PostApiV1AssistantProposals)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/assistant/proposals/{proposal_id}/confirmation", wrapper.PostApiV1AssistantProposalsProposalIdConfirmation)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/exports", wrapper.PostApiV1Exports)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/exports/{export_id}", wrapper.GetApiV1ExportsExportId)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/exports/{export_id}/download", wrapper.GetApiV1ExportsExportIdDownload)
@@ -4389,6 +4512,87 @@ type PostApiV1AnalysisSeriesSeriesIdSelectiondefaultApplicationProblemPlusJSONRe
 }
 
 func (response PostApiV1AnalysisSeriesSeriesIdSelectiondefaultApplicationProblemPlusJSONResponse) VisitPostApiV1AnalysisSeriesSeriesIdSelectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PostApiV1AssistantProposalsRequestObject struct {
+	Params PostApiV1AssistantProposalsParams
+	Body   *PostApiV1AssistantProposalsJSONRequestBody
+}
+
+type PostApiV1AssistantProposalsResponseObject interface {
+	VisitPostApiV1AssistantProposalsResponse(w http.ResponseWriter) error
+}
+
+type PostApiV1AssistantProposals201JSONResponse Document
+
+func (response PostApiV1AssistantProposals201JSONResponse) VisitPostApiV1AssistantProposalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PostApiV1AssistantProposalsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PostApiV1AssistantProposalsdefaultApplicationProblemPlusJSONResponse) VisitPostApiV1AssistantProposalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PostApiV1AssistantProposalsProposalIdConfirmationRequestObject struct {
+	ProposalId string `json:"proposal_id"`
+	Params     PostApiV1AssistantProposalsProposalIdConfirmationParams
+	Body       *PostApiV1AssistantProposalsProposalIdConfirmationJSONRequestBody
+}
+
+type PostApiV1AssistantProposalsProposalIdConfirmationResponseObject interface {
+	VisitPostApiV1AssistantProposalsProposalIdConfirmationResponse(w http.ResponseWriter) error
+}
+
+type PostApiV1AssistantProposalsProposalIdConfirmation201JSONResponse Document
+
+func (response PostApiV1AssistantProposalsProposalIdConfirmation201JSONResponse) VisitPostApiV1AssistantProposalsProposalIdConfirmationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PostApiV1AssistantProposalsProposalIdConfirmationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PostApiV1AssistantProposalsProposalIdConfirmationdefaultApplicationProblemPlusJSONResponse) VisitPostApiV1AssistantProposalsProposalIdConfirmationResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -6770,6 +6974,12 @@ type StrictServerInterface interface {
 	// (POST /api/v1/analysis-series/{series_id}/selection)
 	PostApiV1AnalysisSeriesSeriesIdSelection(ctx context.Context, request PostApiV1AnalysisSeriesSeriesIdSelectionRequestObject) (PostApiV1AnalysisSeriesSeriesIdSelectionResponseObject, error)
 
+	// (POST /api/v1/assistant/proposals)
+	PostApiV1AssistantProposals(ctx context.Context, request PostApiV1AssistantProposalsRequestObject) (PostApiV1AssistantProposalsResponseObject, error)
+
+	// (POST /api/v1/assistant/proposals/{proposal_id}/confirmation)
+	PostApiV1AssistantProposalsProposalIdConfirmation(ctx context.Context, request PostApiV1AssistantProposalsProposalIdConfirmationRequestObject) (PostApiV1AssistantProposalsProposalIdConfirmationResponseObject, error)
+
 	// (GET /api/v1/catalog/projects)
 	GetApiV1CatalogProjects(ctx context.Context, request GetApiV1CatalogProjectsRequestObject) (GetApiV1CatalogProjectsResponseObject, error)
 
@@ -7526,6 +7736,73 @@ func (sh *strictHandler) PostApiV1AnalysisSeriesSeriesIdSelection(w http.Respons
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PostApiV1AnalysisSeriesSeriesIdSelectionResponseObject); ok {
 		if err := validResponse.VisitPostApiV1AnalysisSeriesSeriesIdSelectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PostApiV1AssistantProposals operation middleware
+func (sh *strictHandler) PostApiV1AssistantProposals(w http.ResponseWriter, r *http.Request, params PostApiV1AssistantProposalsParams) {
+	var request PostApiV1AssistantProposalsRequestObject
+
+	request.Params = params
+
+	var body PostApiV1AssistantProposalsJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PostApiV1AssistantProposals(ctx, request.(PostApiV1AssistantProposalsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostApiV1AssistantProposals")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PostApiV1AssistantProposalsResponseObject); ok {
+		if err := validResponse.VisitPostApiV1AssistantProposalsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PostApiV1AssistantProposalsProposalIdConfirmation operation middleware
+func (sh *strictHandler) PostApiV1AssistantProposalsProposalIdConfirmation(w http.ResponseWriter, r *http.Request, proposalId string, params PostApiV1AssistantProposalsProposalIdConfirmationParams) {
+	var request PostApiV1AssistantProposalsProposalIdConfirmationRequestObject
+
+	request.ProposalId = proposalId
+	request.Params = params
+
+	var body PostApiV1AssistantProposalsProposalIdConfirmationJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PostApiV1AssistantProposalsProposalIdConfirmation(ctx, request.(PostApiV1AssistantProposalsProposalIdConfirmationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostApiV1AssistantProposalsProposalIdConfirmation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PostApiV1AssistantProposalsProposalIdConfirmationResponseObject); ok {
+		if err := validResponse.VisitPostApiV1AssistantProposalsProposalIdConfirmationResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
