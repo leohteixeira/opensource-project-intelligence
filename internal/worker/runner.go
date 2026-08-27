@@ -41,10 +41,15 @@ type Runner struct {
 	source       GitHubSourceStore
 	pages        GitHubPageStore
 	intelligence IntelligenceMaterializer
+	exports      ExportProcessor
 }
 
 type IntelligenceMaterializer interface {
 	MaterializeProject(context.Context, int64, time.Time) error
+}
+
+type ExportProcessor interface {
+	Process(context.Context, jobstore.Lease) error
 }
 
 type GitHubClient interface {
@@ -100,6 +105,15 @@ func (r *Runner) UseIntelligence(value IntelligenceMaterializer) error {
 		return errors.New("intelligence materializer is required")
 	}
 	r.intelligence = value
+	return nil
+}
+
+// UseExports installs the durable, bounded export processor.
+func (r *Runner) UseExports(value ExportProcessor) error {
+	if value == nil {
+		return errors.New("export processor is required")
+	}
+	r.exports = value
 	return nil
 }
 
@@ -200,6 +214,14 @@ func (r *Runner) execute(ctx context.Context, lease jobstore.Lease) error {
 		}
 		return r.store.Complete(ctx, lease)
 	case "project_transition":
+		return r.store.Complete(ctx, lease)
+	case "export":
+		if r.exports == nil {
+			return errors.New("export processor is unavailable")
+		}
+		if err := r.exports.Process(ctx, lease); err != nil {
+			return err
+		}
 		return r.store.Complete(ctx, lease)
 	default:
 		return fmt.Errorf("unsupported job kind %q", lease.Job.Kind)
