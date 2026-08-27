@@ -30,8 +30,8 @@ func TestFrozenRouteCatalogMatchesOpenAPI(t *testing.T) {
 	want := readFrozenOperations(t, filepath.Join(repositoryRoot, "specs", "06-api-contracts.md"))
 	got := readOpenAPIOperations(t, filepath.Join(repositoryRoot, "api", "openapi.yaml"))
 
-	if len(want) != 74 {
-		t.Fatalf("frozen route count = %d, want 74", len(want))
+	if len(want) != 76 {
+		t.Fatalf("frozen route count = %d, want 76", len(want))
 	}
 	if len(got) != len(want) {
 		t.Errorf("OpenAPI operation count = %d, want %d", len(got), len(want))
