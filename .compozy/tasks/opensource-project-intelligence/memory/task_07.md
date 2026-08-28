@@ -62,3 +62,24 @@
   `compozy__tool_info`, or `compozy__skill_view`; the required managed skill bodies cannot be
   loaded without violating the runtime's no-CLI/no-direct-read rule. Continuing from the embedded
   workflow requirements and repository-mandated Go guidance.
+- 2026-08-28: Completed the bounded assistant boundary in `internal/analysis/agent`, including
+  finite step, deadline, output, cost, model-concurrency, and typed-tool-concurrency limits. The
+  only state-changing tool remains the allowlisted non-destructive repository-add action;
+  forbidden actions fail before HITL, while confirmation is actor/action/version bound,
+  single-use, ten-minute limited, and revalidated at execution.
+- 2026-08-28: Completed requester-authorized durable exports with normalized immutable requests,
+  one cutoff, stable localized CSV and evidence JSON, SHA-256 metadata, 24-hour expiry, and Project
+  purge ownership. Added durable request-to-Project references and corrected purge SQL typing so
+  deletion reconciliation expires succeeded artifacts without crossing requester boundaries.
+- 2026-08-28: Completed Admin audit filters and the redacted model-provider operations projection,
+  made AI optional for deterministic readiness, added finite runtime configuration, and delivered
+  generated-client S19/S22 English and Brazilian Portuguese routes with narrow/wide axe and visual
+  evidence. Updated the production runbook for readiness, backup/restore, export retention,
+  graceful shutdown, incident redaction, and release gates.
+- 2026-08-28: Verified all 57 assigned identifiers exist exactly once. Fresh final gates passed:
+  generated drift; Go vet, race tests, and build; the complete real-PostgreSQL integration suite;
+  frontend lint, typecheck, 93 unit tests, and production build; all six Task 07 Playwright/axe
+  journeys; and every pre-commit hook including formatting, lint, and secret scanning.
+- 2026-08-28: Rehearsed all production Compose image builds, API health/readiness with optional AI
+  disabled, API/worker graceful `SIGTERM` exits, and PostgreSQL plus object-manifest backup/restore
+  checksums against disposable databases. Task 07 is complete and remains uncommitted.

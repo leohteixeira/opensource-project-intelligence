@@ -74,3 +74,13 @@
   suite, frontend lint/typecheck/93 unit tests/build, formatting and Markdown checks, and all nine
   assigned Playwright/axe journeys. Required S13, S14, S15, and S21 narrow/wide artifacts are
   present under `artifacts/task_06/ui/`.
+- Task 07 is complete with a finite typed assistant boundary, action-bound single-use HITL,
+  requester-authorized cutoff-consistent exports, immutable filtered audit operations, redacted
+  model-provider health/usage, optional-AI readiness, Project-purge reconciliation, and production
+  generated-client S19/S22 surfaces in English and Brazilian Portuguese.
+- Task 07 completion has fresh evidence from generated drift, Go vet/race/build, the full
+  real-PostgreSQL integration suite, frontend lint/typecheck/93 unit tests/build, all six assigned
+  Playwright/axe journeys, pre-commit formatting/lint/secret gates, production Compose
+  health/readiness and graceful shutdown, plus checksummed backup/restore rehearsal. All 57 assigned
+  identifiers have concrete exactly-once coverage, and the required S19/S22 narrow/wide artifacts
+  are present under `artifacts/task_07/ui/`.
