@@ -339,6 +339,11 @@ paths:
           required: false
           schema:
             type: string
+        - name: outcome
+          in: query
+          required: false
+          schema:
+            type: string
         - name: from
           in: query
           required: false
@@ -2038,8 +2043,16 @@ paths:
     post:
       operationId: postApiV1Exports
       tags: [contract]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
@@ -2088,9 +2101,10 @@ paths:
         '200':
           description: Successful contract response
           content:
-            application/json:
+            application/octet-stream:
               schema:
-                $ref: '#/components/schemas/Document'
+                type: string
+                format: binary
         default:
           $ref: '#/components/responses/Problem'
 components:

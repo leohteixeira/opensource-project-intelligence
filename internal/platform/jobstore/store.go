@@ -573,7 +573,7 @@ func (s *Store) PurgeProject(ctx context.Context, lease Lease, batchSize int) (b
 			return false, Lease{}, fmt.Errorf("delete owned object %d: %w", object.id, err)
 		}
 		if _, err := tx.Exec(ctx, `UPDATE object_references SET retention_state='purged'
-			WHERE id=$1 AND project_id=$2`, object.id, lease.Job.ProjectID); err != nil {
+			WHERE id=$1`, object.id); err != nil {
 			return false, Lease{}, fmt.Errorf("purge object ownership: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `UPDATE purge_manifest_objects SET deleted_at=now()
@@ -587,6 +587,12 @@ func (s *Store) PurgeProject(ctx context.Context, lease Lease, batchSize int) (b
 		return false, Lease{}, fmt.Errorf("count purge remainder: %w", err)
 	}
 	if remaining == 0 {
+		if _, err := tx.Exec(ctx, `UPDATE export_requests SET state='expired'
+			WHERE state='succeeded' AND id IN (
+				SELECT export_id FROM export_request_projects WHERE project_id=$1
+			)`, lease.Job.ProjectID); err != nil {
+			return false, Lease{}, fmt.Errorf("expire project exports: %w", err)
+		}
 		fingerprint := sha256Text(fmt.Sprintf("%d:%s", lease.Job.ProjectID, slug))
 		tombstoneID, err := s.ids.Next(ctx)
 		if err != nil {
@@ -630,7 +636,12 @@ func (s *Store) ensureManifest(ctx context.Context, tx pgx.Tx, projectID, jobID 
 		return 0, fmt.Errorf("create purge manifest: %w", err)
 	}
 	if _, err := tx.Exec(ctx, `INSERT INTO purge_manifest_objects (manifest_id,object_reference_id)
-		SELECT $1,id FROM object_references WHERE project_id=$2`, manifestID, projectID); err != nil {
+		SELECT $1::bigint,id FROM object_references WHERE project_id=$2
+		UNION
+		SELECT $1::bigint,exports.object_reference_id
+		FROM export_requests exports
+		JOIN export_request_projects owners ON owners.export_id=exports.id
+		WHERE owners.project_id=$2 AND exports.object_reference_id IS NOT NULL`, manifestID, projectID); err != nil {
 		return 0, fmt.Errorf("snapshot project object ownership: %w", err)
 	}
 	return manifestID, nil

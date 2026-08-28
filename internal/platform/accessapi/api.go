@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/leohteixeira/opensource-project-intelligence/internal/access"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/analysis"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/accessstore"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/httpapi"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/httpx"
@@ -58,6 +59,17 @@ type Handler struct {
 	config     Config
 	idempotent *idempotencyCache
 	loginLimit *rateLimiter
+	models     interface {
+		Status() analysis.ProviderStatus
+	}
+}
+
+type Option func(*Handler)
+
+func WithModelOperations(models interface {
+	Status() analysis.ProviderStatus
+}) Option {
+	return func(handler *Handler) { handler.models = models }
 }
 
 func New(
@@ -66,6 +78,7 @@ func New(
 	cursors *access.CursorCodec,
 	logger *slog.Logger,
 	config Config,
+	options ...Option,
 ) (*Handler, error) {
 	if store == nil || cursors == nil || logger == nil {
 		return nil, errors.New("access store, cursor codec, and logger are required")
@@ -77,10 +90,16 @@ func New(
 	if err != nil || base.Scheme == "" || base.Host == "" {
 		return nil, errors.New("public base URL must be absolute")
 	}
-	return &Handler{
+	handler := &Handler{
 		store: store, identity: identity, cursors: cursors, logger: logger, config: config,
 		idempotent: newIdempotencyCache(), loginLimit: newRateLimiter(10, time.Minute),
-	}, nil
+	}
+	for _, option := range options {
+		if option != nil {
+			option(handler)
+		}
+	}
+	return handler, nil
 }
 
 // Routes returns only the operations owned by the access task. Other generated
@@ -462,18 +481,60 @@ func (h *Handler) GetApiV1AdminAudit(
 		return
 	}
 	filters := strings.Join([]string{pointerValue(params.Actor), pointerValue(params.Action),
-		pointerValue(params.Resource), pointerValue(params.From), pointerValue(params.To)}, "|")
+		pointerValue(params.Resource), pointerValue(params.Outcome), pointerValue(params.From),
+		pointerValue(params.To)}, "|")
 	offset, err := h.cursorOffset(pointerValue(params.Cursor), "audit", filters)
 	if err != nil {
 		h.problem(w, r, err)
 		return
 	}
-	events, err := h.store.ListAudit(r.Context(), state.principal, limit+1, offset)
+	filter, err := auditFilter(params)
+	if err != nil {
+		h.problem(w, r, err)
+		return
+	}
+	filter.Limit, filter.Offset = limit+1, offset
+	events, err := h.store.ListAudit(r.Context(), state.principal, filter)
 	if err != nil {
 		h.problem(w, r, err)
 		return
 	}
 	h.writePage(w, r, "audit", filters, offset, limit, events)
+}
+
+func auditFilter(params httpapi.GetApiV1AdminAuditParams) (accessstore.AuditFilter, error) {
+	filter := accessstore.AuditFilter{Action: strings.TrimSpace(pointerValue(params.Action)),
+		Resource: strings.TrimSpace(pointerValue(params.Resource)),
+		Outcome:  strings.TrimSpace(pointerValue(params.Outcome))}
+	if filter.Outcome != "" && filter.Outcome != "succeeded" && filter.Outcome != "failed" &&
+		filter.Outcome != "denied" && filter.Outcome != "stale" {
+		return accessstore.AuditFilter{}, invalidRequest(errors.New("unsupported audit outcome"))
+	}
+	if raw := strings.TrimSpace(pointerValue(params.Actor)); raw != "" {
+		id, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || id <= 0 {
+			return accessstore.AuditFilter{}, invalidRequest(errors.New("actor must be a positive identifier"))
+		}
+		filter.ActorID = &id
+	}
+	for raw, target := range map[string]**time.Time{
+		pointerValue(params.From): &filter.OccurredFrom,
+		pointerValue(params.To):   &filter.OccurredTo,
+	} {
+		if strings.TrimSpace(raw) == "" {
+			continue
+		}
+		value, err := time.Parse(time.RFC3339, raw)
+		if err != nil {
+			return accessstore.AuditFilter{}, invalidRequest(errors.New("audit time bounds must use RFC3339"))
+		}
+		value = value.UTC()
+		*target = &value
+	}
+	if filter.OccurredFrom != nil && filter.OccurredTo != nil && filter.OccurredFrom.After(*filter.OccurredTo) {
+		return accessstore.AuditFilter{}, invalidRequest(errors.New("audit from must not be after to"))
+	}
+	return filter, nil
 }
 
 func (h *Handler) GetApiV1AdminOperations(w http.ResponseWriter, r *http.Request) {
@@ -484,13 +545,26 @@ func (h *Handler) GetApiV1AdminOperations(w http.ResponseWriter, r *http.Request
 	if h.identity != nil {
 		status = "healthy"
 	}
-	h.writeJSON(w, http.StatusOK, map[string]any{
-		"status": status,
-		"capabilities": []map[string]any{{
-			"name": "external_identity", "configured": h.identity != nil, "status": status,
-		}},
-		"redacted": true,
-	})
+	capabilities := []map[string]any{{
+		"name": "external_identity", "configured": h.identity != nil, "status": status,
+	}}
+	response := map[string]any{
+		"status":       status,
+		"capabilities": capabilities,
+		"redacted":     true,
+	}
+	if h.models != nil {
+		model := h.models.Status()
+		response["model_provider"] = model
+		capabilities = append(capabilities, map[string]any{
+			"name": "model_provider", "configured": model.Configured, "status": model.Health,
+		})
+		response["capabilities"] = capabilities
+		if model.Health == "degraded" {
+			response["status"] = "degraded"
+		}
+	}
+	h.writeJSON(w, http.StatusOK, response)
 }
 
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {

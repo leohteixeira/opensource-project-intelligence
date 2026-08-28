@@ -440,6 +440,7 @@ export type GetApiV1AdminAuditData = {
     actor?: string;
     action?: string;
     resource?: string;
+    outcome?: string;
     from?: string;
     to?: string;
     cursor?: string;
@@ -2266,7 +2267,10 @@ export type PostApiV1AssistantProposalsProposalIdConfirmationResponse =
   PostApiV1AssistantProposalsProposalIdConfirmationResponses[keyof PostApiV1AssistantProposalsProposalIdConfirmationResponses];
 
 export type PostApiV1ExportsData = {
-  body?: Document;
+  body: Document;
+  headers: {
+    'Idempotency-Key': string;
+  };
   path?: never;
   query?: never;
   url: '/api/v1/exports';
@@ -2342,7 +2346,7 @@ export type GetApiV1ExportsExportIdDownloadResponses = {
   /**
    * Successful contract response
    */
-  200: Document;
+  200: Blob | File;
 };
 
 export type GetApiV1ExportsExportIdDownloadResponse =

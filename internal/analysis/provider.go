@@ -27,18 +27,23 @@ type ProviderConfig struct {
 
 func (config ProviderConfig) Validate() error {
 	if strings.TrimSpace(config.Provider) == "" || strings.TrimSpace(config.Model) == "" ||
+		len(config.Capabilities) == 0 ||
 		config.MaxConcurrency <= 0 || config.MaxConcurrency > 64 || config.Revision <= 0 ||
 		config.InputCost < 0 || config.OutputCost < 0 ||
 		(config.InputCost > 0 || config.OutputCost > 0) && strings.TrimSpace(config.CostCurrency) == "" {
 		return ErrInvalidProviderConfig
 	}
 	seen := make(map[string]struct{}, len(config.Capabilities))
+	allowed := map[string]struct{}{"analysis": {}, "assistant": {}}
 	for _, capability := range config.Capabilities {
 		capability = strings.TrimSpace(capability)
 		if capability == "" {
 			return ErrInvalidProviderConfig
 		}
 		if _, exists := seen[capability]; exists {
+			return ErrInvalidProviderConfig
+		}
+		if _, exists := allowed[capability]; !exists {
 			return ErrInvalidProviderConfig
 		}
 		seen[capability] = struct{}{}

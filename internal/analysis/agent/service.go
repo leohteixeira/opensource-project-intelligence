@@ -40,6 +40,9 @@ var (
 	ErrAlreadyUsed      = errors.New("assistant proposal already used")
 	ErrStateChanged     = errors.New("assistant proposal state changed")
 	ErrQuotaExceeded    = errors.New("assistant action quota exceeded")
+	ErrUnavailable      = errors.New("assistant capability unavailable")
+	ErrIdempotencyKey   = errors.New("assistant idempotency key reused")
+	ErrRunLimit         = errors.New("assistant run limit exceeded")
 )
 
 // RepositoryAdd is the complete, typed input accepted by the sole executable

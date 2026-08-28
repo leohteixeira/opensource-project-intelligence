@@ -121,6 +121,7 @@ type GetApiV1AdminAuditParams struct {
 	Actor    *string `form:"actor,omitempty" json:"actor,omitempty"`
 	Action   *string `form:"action,omitempty" json:"action,omitempty"`
 	Resource *string `form:"resource,omitempty" json:"resource,omitempty"`
+	Outcome  *string `form:"outcome,omitempty" json:"outcome,omitempty"`
 	From     *string `form:"from,omitempty" json:"from,omitempty"`
 	To       *string `form:"to,omitempty" json:"to,omitempty"`
 	Cursor   *string `form:"cursor,omitempty" json:"cursor,omitempty"`
@@ -167,6 +168,11 @@ type GetApiV1CatalogProjectsParams struct {
 	Q      *string `form:"q,omitempty" json:"q,omitempty"`
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 	Limit  *int32  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// PostApiV1ExportsParams defines parameters for PostApiV1Exports.
+type PostApiV1ExportsParams struct {
+	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
 // GetApiV1PoliciesParams defines parameters for GetApiV1Policies.
@@ -482,7 +488,7 @@ type ServerInterface interface {
 	GetApiV1ComparisonsComparisonId(w http.ResponseWriter, r *http.Request, comparisonId string)
 
 	// (POST /api/v1/exports)
-	PostApiV1Exports(w http.ResponseWriter, r *http.Request)
+	PostApiV1Exports(w http.ResponseWriter, r *http.Request, params PostApiV1ExportsParams)
 
 	// (GET /api/v1/exports/{export_id})
 	GetApiV1ExportsExportId(w http.ResponseWriter, r *http.Request, exportId string)
@@ -700,6 +706,19 @@ func (siw *ServerInterfaceWrapper) GetApiV1AdminAudit(w http.ResponseWriter, r *
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "resource"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "resource", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "outcome" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "outcome", r.URL.Query(), &params.Outcome, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "outcome"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "outcome", Err: err})
 		}
 		return
 	}
@@ -1525,8 +1544,39 @@ func (siw *ServerInterfaceWrapper) GetApiV1ComparisonsComparisonId(w http.Respon
 // PostApiV1Exports operation middleware
 func (siw *ServerInterfaceWrapper) PostApiV1Exports(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostApiV1ExportsParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Idempotency-Key", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Idempotency-Key", Err: err})
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		err := fmt.Errorf("Header parameter Idempotency-Key is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "Idempotency-Key", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostApiV1Exports(w, r)
+		siw.Handler.PostApiV1Exports(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4761,7 +4811,8 @@ func (response GetApiV1ComparisonsComparisonIddefaultApplicationProblemPlusJSONR
 }
 
 type PostApiV1ExportsRequestObject struct {
-	Body *PostApiV1ExportsJSONRequestBody
+	Params PostApiV1ExportsParams
+	Body   *PostApiV1ExportsJSONRequestBody
 }
 
 type PostApiV1ExportsResponseObject interface {
@@ -4846,17 +4897,23 @@ type GetApiV1ExportsExportIdDownloadResponseObject interface {
 	VisitGetApiV1ExportsExportIdDownloadResponse(w http.ResponseWriter) error
 }
 
-type GetApiV1ExportsExportIdDownload200JSONResponse Document
+type GetApiV1ExportsExportIdDownload200ApplicationoctetStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
 
-func (response GetApiV1ExportsExportIdDownload200JSONResponse) VisitGetApiV1ExportsExportIdDownloadResponse(w http.ResponseWriter) error {
+func (response GetApiV1ExportsExportIdDownload200ApplicationoctetStreamResponse) VisitGetApiV1ExportsExportIdDownloadResponse(w http.ResponseWriter) error {
 
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	_, err := buf.WriteTo(w)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
 	return err
 }
 
@@ -7923,18 +7980,17 @@ func (sh *strictHandler) GetApiV1ComparisonsComparisonId(w http.ResponseWriter, 
 }
 
 // PostApiV1Exports operation middleware
-func (sh *strictHandler) PostApiV1Exports(w http.ResponseWriter, r *http.Request) {
+func (sh *strictHandler) PostApiV1Exports(w http.ResponseWriter, r *http.Request, params PostApiV1ExportsParams) {
 	var request PostApiV1ExportsRequestObject
+
+	request.Params = params
 
 	var body PostApiV1ExportsJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		if !errors.Is(err, io.EOF) {
-			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-			return
-		}
-	} else {
-		request.Body = &body
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
 	}
+	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.PostApiV1Exports(ctx, request.(PostApiV1ExportsRequestObject))

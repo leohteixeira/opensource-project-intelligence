@@ -62,6 +62,17 @@ type Config struct {
 	// Credentials remain adapter-owned and are never accepted from an end user.
 	AIProvider string
 	AIModel    string
+	// AIConcurrency bounds simultaneous model runs. Agent limits are applied
+	// to every ADK invocation and have finite defaults even when AI is disabled.
+	AIConcurrency      int
+	ADKMaxSteps        int
+	ADKTimeout         time.Duration
+	ADKMaxOutputBytes  int
+	ADKMaxCostMicros   int
+	ADKToolConcurrency int
+
+	// ExportConcurrency bounds CPU and memory intensive artifact generation.
+	ExportConcurrency int
 
 	// ValkeyEnabled enables disposable acceleration state.
 	ValkeyEnabled bool
@@ -132,6 +143,34 @@ func Load(serviceName string, lookup func(string) (string, bool)) (Config, error
 		problems = append(problems, err.Error())
 	} else if cfg.WorkerConcurrency < 1 {
 		problems = append(problems, "WORKER_CONCURRENCY must be at least 1")
+	}
+	for _, setting := range []struct {
+		key      string
+		fallback int
+		target   *int
+		maximum  int
+	}{
+		{"AI_CONCURRENCY", 4, &cfg.AIConcurrency, 64},
+		{"ADK_MAX_STEPS", 12, &cfg.ADKMaxSteps, 64},
+		{"ADK_MAX_OUTPUT_BYTES", 65536, &cfg.ADKMaxOutputBytes, 16 << 20},
+		{"ADK_MAX_COST_MICROS", 100000, &cfg.ADKMaxCostMicros, 1_000_000_000},
+		{"ADK_TOOL_CONCURRENCY", 1, &cfg.ADKToolConcurrency, 8},
+		{"EXPORT_CONCURRENCY", 2, &cfg.ExportConcurrency, 16},
+	} {
+		value, valueErr := intOrDefault(lookup, setting.key, setting.fallback)
+		if valueErr != nil {
+			problems = append(problems, valueErr.Error())
+			continue
+		}
+		*setting.target = value
+		if value < 1 || value > setting.maximum {
+			problems = append(problems, fmt.Sprintf("%s must be between 1 and %d", setting.key, setting.maximum))
+		}
+	}
+	if cfg.ADKTimeout, err = durationOrDefault(lookup, "ADK_TIMEOUT", 2*time.Minute); err != nil {
+		problems = append(problems, err.Error())
+	} else if cfg.ADKTimeout > 10*time.Minute {
+		problems = append(problems, "ADK_TIMEOUT must not exceed 10m")
 	}
 	if cfg.SessionDuration, err = durationOrDefault(lookup, "SESSION_DURATION", 12*time.Hour); err != nil {
 		problems = append(problems, err.Error())
