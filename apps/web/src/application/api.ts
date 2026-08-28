@@ -44,6 +44,10 @@ import {
   postApiV1AnalysisSeriesSeriesIdSelection,
   postApiV1AlertsAlertIdRead,
   postApiV1AlertsAlertIdTransition,
+  postApiV1AssistantProposals,
+  postApiV1AssistantProposalsProposalIdConfirmation,
+  postApiV1Exports,
+  getApiV1ExportsExportId,
   postApiV1MeDeletion,
   postApiV1Projects,
   postApiV1ProjectsProjectIdCrawls,
@@ -118,6 +122,32 @@ export interface JobDocument extends Document {
   progress?: { completed?: number; total?: number; total_status?: string; unit?: string };
   checkpoint?: Document;
   failure?: string;
+}
+
+export interface AssistantProposalDocument extends Document {
+  id: string;
+  status: string;
+  action: string;
+  inputs?: Document;
+  resources?: string[];
+  effect?: string;
+  quota?: { name?: string; cost?: number; remaining?: number };
+  expires_at?: string;
+  confirmation_token?: string;
+  result?: { repository_id?: string; audit_event_id?: string };
+}
+
+export interface ExportDocument extends Document {
+  id: string;
+  job_id: string;
+  state: string;
+  row_count?: number;
+  media_type?: string;
+  sha256?: string;
+  size_bytes?: number;
+  download_url?: string;
+  failure?: string;
+  expires_at?: string;
 }
 
 export type IntelligenceStatus =
@@ -217,6 +247,45 @@ function unwrap<T>(result: Result): T {
 
 export async function fetchSession(): Promise<SessionDocument> {
   return unwrap<SessionDocument>(await getApiV1Session());
+}
+
+export async function proposeAssistantAction(
+  session: SessionDocument,
+  message: string,
+): Promise<AssistantProposalDocument> {
+  return unwrap<AssistantProposalDocument>(
+    await postApiV1AssistantProposals({
+      body: { message },
+      headers: idempotencyHeaders(session),
+    }),
+  );
+}
+
+export async function confirmAssistantAction(
+  session: SessionDocument,
+  proposalId: string,
+  confirmationToken: string,
+): Promise<AssistantProposalDocument> {
+  return unwrap<AssistantProposalDocument>(
+    await postApiV1AssistantProposalsProposalIdConfirmation({
+      path: { proposal_id: proposalId },
+      body: { confirmation_token: confirmationToken },
+      headers: idempotencyHeaders(session),
+    }),
+  );
+}
+
+export async function requestExport(
+  session: SessionDocument,
+  value: Document,
+): Promise<ExportDocument> {
+  return unwrap<ExportDocument>(
+    await postApiV1Exports({ body: value, headers: idempotencyHeaders(session) }),
+  );
+}
+
+export async function fetchExport(exportId: string): Promise<ExportDocument> {
+  return unwrap<ExportDocument>(await getApiV1ExportsExportId({ path: { export_id: exportId } }));
 }
 
 export async function fetchCatalog(q: string, cursor?: string): Promise<Page<CatalogProject>> {
@@ -332,8 +401,29 @@ export async function updateServiceAccount(
   );
 }
 
-export async function fetchAudit(): Promise<Page<Document>> {
-  return unwrap<Page<Document>>(await getApiV1AdminAudit({ query: { limit: 50 } }));
+export interface AuditFilters {
+  actor?: string;
+  action?: string;
+  resource?: string;
+  outcome?: string;
+  from?: string;
+  to?: string;
+}
+
+export async function fetchAudit(filters: AuditFilters = {}): Promise<Page<Document>> {
+  return unwrap<Page<Document>>(
+    await getApiV1AdminAudit({
+      query: {
+        actor: filters.actor || undefined,
+        action: filters.action || undefined,
+        resource: filters.resource || undefined,
+        outcome: filters.outcome || undefined,
+        from: filters.from || undefined,
+        to: filters.to || undefined,
+        limit: 50,
+      },
+    }),
+  );
 }
 
 export async function fetchOperations(): Promise<Document> {
@@ -855,4 +945,14 @@ function mutationHeaders(
   if (idempotent) headers['Idempotency-Key'] = crypto.randomUUID();
   if (version !== undefined) headers['If-Match'] = `"v${version}"`;
   return headers;
+}
+
+function idempotencyHeaders(
+  session: SessionDocument,
+): Record<string, string> & { 'Idempotency-Key': string } {
+  const headers = mutationHeaders(session, true);
+  return {
+    ...headers,
+    'Idempotency-Key': headers['Idempotency-Key'] ?? crypto.randomUUID(),
+  };
 }

@@ -19,16 +19,22 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/leohteixeira/opensource-project-intelligence/internal/access"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/analysis"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/analysis/agent"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/accessapi"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/accessstore"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/assistantstore"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/config"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/database"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/exportstore"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/health"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/httpx"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/id"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/intelligenceapi"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/intelligencestore"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/objectstore"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/oidc"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/operationsapi"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/projectapi"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/projectstore"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/telemetry"
@@ -137,10 +143,20 @@ func routes(ctx context.Context, logger *slog.Logger, pool *database.Pool, cfg c
 		}
 	}
 	publicURL, _ := url.Parse(cfg.PublicBaseURL)
+	var providerConfig *analysis.ProviderConfig
+	if cfg.AIProvider != "" {
+		providerConfig = &analysis.ProviderConfig{Provider: cfg.AIProvider, Model: cfg.AIModel,
+			Capabilities: []string{"analysis", "assistant"}, MaxConcurrency: cfg.AIConcurrency,
+			Enabled: true, Revision: 1}
+	}
+	models, err := analysis.NewProviderManager(providerConfig)
+	if err != nil {
+		return nil, err
+	}
 	accessHandler, err := accessapi.New(store, identity, cursors, logger, accessapi.Config{
 		PublicBaseURL: cfg.PublicBaseURL, IssuerURL: cfg.KeycloakIssuerURL,
 		SessionTTL: cfg.SessionDuration, SecureCookies: publicURL.Scheme == "https",
-	})
+	}, accessapi.WithModelOperations(models))
 	if err != nil {
 		return nil, err
 	}
@@ -171,6 +187,39 @@ func routes(ctx context.Context, logger *slog.Logger, pool *database.Pool, cfg c
 		return nil, err
 	}
 	intelligenceRoutes := accessHandler.Middleware(intelligenceapi.Routes(intelligence))
+	var assistant operationsapi.Assistant
+	if cfg.AIProvider != "" {
+		assistantPersistence := assistantstore.New(pool, ids)
+		planner, plannerErr := agent.NewBoundedPlanner(agent.StructuredPlanner{}, agent.Limits{
+			MaxSteps: cfg.ADKMaxSteps, Timeout: cfg.ADKTimeout, MaxOutputBytes: cfg.ADKMaxOutputBytes,
+			MaxCostMicros: cfg.ADKMaxCostMicros, Concurrency: cfg.ADKToolConcurrency,
+		})
+		if plannerErr != nil {
+			return nil, plannerErr
+		}
+		assistant, err = agent.New(planner, assistantPersistence, assistantPersistence,
+			assistantPersistence, ids)
+		if err != nil {
+			return nil, err
+		}
+	}
+	var exports *exportstore.Store
+	if cfg.ObjectStorageEnabled {
+		blobs, blobErr := objectstore.NewS3(objectstore.Config{Endpoint: cfg.S3Endpoint,
+			Bucket: cfg.S3Bucket, AccessKey: cfg.S3AccessKey, SecretKey: cfg.S3SecretKey})
+		if blobErr != nil {
+			return nil, blobErr
+		}
+		exports, err = exportstore.New(pool, ids, blobs, cfg.ExportConcurrency)
+		if err != nil {
+			return nil, err
+		}
+	}
+	operations, err := operationsapi.New(assistant, exports, logger)
+	if err != nil {
+		return nil, err
+	}
+	operationRoutes := accessHandler.Middleware(operationsapi.Routes(operations))
 
 	// Liveness: the process is up. It never touches a dependency.
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
@@ -206,6 +255,15 @@ func routes(ctx context.Context, logger *slog.Logger, pool *database.Pool, cfg c
 		} else {
 			dependencies = append(dependencies, health.Dependency{Name: "valkey", Importance: health.Optional, State: health.Disabled})
 		}
+		modelState := health.Disabled
+		if models.Status().Configured {
+			modelState = health.Available
+			if models.Status().Health == "degraded" {
+				modelState = health.Degraded
+			}
+		}
+		dependencies = append(dependencies, health.Dependency{Name: "model_provider",
+			Importance: health.Optional, State: modelState})
 
 		report := health.Evaluate(dependencies)
 		status := http.StatusOK
@@ -217,7 +275,7 @@ func routes(ctx context.Context, logger *slog.Logger, pool *database.Pool, cfg c
 
 	// Versioned contract surface. Handlers are registered per capability as
 	// they land.
-	mux.HandleFunc("GET /api/v1/", func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc("/api/v1/", func(w http.ResponseWriter, _ *http.Request) {
 		httpx.WriteJSON(w, logger, http.StatusNotFound, map[string]string{
 			"error": "this endpoint does not exist yet",
 		})
@@ -247,6 +305,9 @@ func routes(ctx context.Context, logger *slog.Logger, pool *database.Pool, cfg c
 	mux.Handle("/api/v1/alert-rules/", intelligenceRoutes)
 	mux.Handle("/api/v1/alerts", intelligenceRoutes)
 	mux.Handle("/api/v1/alerts/", intelligenceRoutes)
+	mux.Handle("/api/v1/assistant/", operationRoutes)
+	mux.Handle("/api/v1/exports", operationRoutes)
+	mux.Handle("/api/v1/exports/", operationRoutes)
 
 	return mux, nil
 }

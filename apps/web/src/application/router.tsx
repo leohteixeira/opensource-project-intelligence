@@ -40,6 +40,7 @@ import {
   TrendRecommendationScreen,
 } from './screens/GovernanceScreen';
 import { PortfolioScreen, ProjectsScreen, WorkspaceProjectScreen } from './screens/WorkspaceScreen';
+import { AssistantOperationalScreen, ExportsOperationalScreen } from './screens/OperationalScreen';
 
 export interface ApplicationContext {
   locale: Locale;
@@ -190,6 +191,22 @@ function localizedRoutes(locale: Locale) {
           </Protected>
         ),
       },
+      {
+        path: routeSegment(locale, 'assistant'),
+        element: (
+          <Protected required="member">
+            <AssistantOperationalScreen />
+          </Protected>
+        ),
+      },
+      {
+        path: routeSegment(locale, 'exports'),
+        element: (
+          <Protected required="member">
+            <ExportsOperationalScreen />
+          </Protected>
+        ),
+      },
       { path: routeSegment(locale, 'access'), element: <AccessScreen /> },
       {
         path: routeSegment(locale, 'account'),
@@ -294,6 +311,16 @@ function LocalizedShell({ locale }: { locale: Locale }) {
             key: 'alerts',
             label: locale === 'pt-BR' ? 'Alertas' : 'Alerts',
             icon: 'bell' as const,
+          },
+          {
+            key: 'assistant',
+            label: locale === 'pt-BR' ? 'Assistente' : 'Assistant',
+            icon: 'wand-sparkles' as const,
+          },
+          {
+            key: 'exports',
+            label: locale === 'pt-BR' ? 'Exportações' : 'Exports',
+            icon: 'download' as const,
           },
         ]
       : []),

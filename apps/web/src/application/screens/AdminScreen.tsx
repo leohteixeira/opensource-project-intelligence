@@ -308,11 +308,24 @@ function ServiceAccountActions({
 function AuditScreen() {
   const { t } = useTranslation();
   const { narrow } = useApplication();
-  const audit = useQuery({ queryKey: ['admin-audit'], queryFn: fetchAudit });
+  const [draft, setDraft] = useState({
+    actor: '',
+    action: '',
+    resource: '',
+    outcome: '',
+    from: '',
+    to: '',
+  });
+  const [filters, setFilters] = useState(draft);
+  const audit = useQuery({
+    queryKey: ['admin-audit', filters],
+    queryFn: () => fetchAudit(filters),
+  });
   const columns: readonly TableColumn<Document>[] = [
     { key: 'occurred_at', header: t('occurredAt'), mono: true },
     { key: 'action', header: t('action'), mono: true },
     { key: 'actor_kind', header: t('role') },
+    { key: 'actor_id', header: t('actor'), mono: true },
     { key: 'resource_type', header: t('resource') },
     { key: 'outcome', header: t('outcome'), render: statusCell },
   ];
@@ -321,6 +334,64 @@ function AuditScreen() {
       <Banner tone="neutral" title={t('audit')}>
         {t('auditImmutable')}
       </Banner>
+      <Panel title={t('audit')}>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            setFilters({ ...draft });
+          }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: narrow ? '1fr' : 'repeat(3, minmax(0, 1fr))',
+            gap: 'var(--space-1)',
+            alignItems: 'end',
+          }}
+        >
+          <TextField
+            id="audit-actor"
+            label={t('actor')}
+            value={draft.actor}
+            onChange={(event) => setDraft((value) => ({ ...value, actor: event.target.value }))}
+          />
+          <TextField
+            id="audit-action"
+            label={t('action')}
+            value={draft.action}
+            onChange={(event) => setDraft((value) => ({ ...value, action: event.target.value }))}
+          />
+          <TextField
+            id="audit-resource"
+            label={t('resource')}
+            value={draft.resource}
+            onChange={(event) => setDraft((value) => ({ ...value, resource: event.target.value }))}
+          />
+          <Select
+            id="audit-outcome"
+            label={t('outcome')}
+            placeholder={t('outcome')}
+            value={draft.outcome}
+            onChange={(event) => setDraft((value) => ({ ...value, outcome: event.target.value }))}
+            options={['succeeded', 'failed', 'denied', 'stale']}
+          />
+          <TextField
+            id="audit-from"
+            label={t('from')}
+            type="date"
+            value={draft.from}
+            onChange={(event) => setDraft((value) => ({ ...value, from: event.target.value }))}
+          />
+          <TextField
+            id="audit-to"
+            label={t('to')}
+            type="date"
+            value={draft.to}
+            onChange={(event) => setDraft((value) => ({ ...value, to: event.target.value }))}
+          />
+          <Button type="submit" variant="primary">
+            {t('applyFilters')}
+          </Button>
+        </form>
+      </Panel>
       <AdminTablePage
         title={t('audit')}
         rows={audit.data?.items ?? []}
@@ -336,6 +407,7 @@ function AuditScreen() {
 
 function OperationsScreen() {
   const { t } = useTranslation();
+  const { locale } = useApplication();
   const operations = useQuery({ queryKey: ['admin-operations'], queryFn: fetchOperations });
   if (operations.isError) {
     return (
@@ -351,6 +423,7 @@ function OperationsScreen() {
     ? Object.entries(health)
     : [['status', operations.data?.status ?? 'unavailable']];
   const capabilities = arrayRecordValue(operations.data?.capabilities);
+  const modelProvider = recordValue(operations.data?.model_provider);
   return (
     <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
       <h1 style={{ font: 'var(--type-page)' }}>{t('operations')}</h1>
@@ -374,6 +447,31 @@ function OperationsScreen() {
           }))}
         />
       </Panel>
+      {Object.keys(modelProvider).length ? (
+        <Panel title={locale === 'pt-BR' ? 'Provedor de modelo' : 'Model provider'}>
+          <DefinitionList
+            items={[
+              'provider',
+              'model',
+              'health',
+              'enabled',
+              'capabilities',
+              'revision',
+              'usage',
+              'redacted',
+            ].map((label) => ({
+              label,
+              value:
+                label === 'capabilities'
+                  ? arrayValue(modelProvider[label]).join(', ') || '—'
+                  : label === 'usage'
+                    ? JSON.stringify(recordValue(modelProvider[label]))
+                    : safeValue(modelProvider[label]),
+              mono: true,
+            }))}
+          />
+        </Panel>
+      ) : null}
     </div>
   );
 }

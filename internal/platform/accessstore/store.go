@@ -66,6 +66,17 @@ type AuditEvent struct {
 	Changes      map[string]any `json:"changes"`
 }
 
+type AuditFilter struct {
+	ActorID      *int64
+	Action       string
+	Resource     string
+	Outcome      string
+	OccurredFrom *time.Time
+	OccurredTo   *time.Time
+	Limit        int
+	Offset       int
+}
+
 type MemberFilter struct {
 	State  access.Status
 	Role   access.Role
@@ -817,20 +828,28 @@ func (s *Store) UpdateServiceAccount(
 	return next, nil
 }
 
-func (s *Store) ListAudit(ctx context.Context, actor access.Principal, limit, offset int) ([]AuditEvent, error) {
+func (s *Store) ListAudit(ctx context.Context, actor access.Principal, filter AuditFilter) ([]AuditEvent, error) {
 	if err := access.Authorize(actor, access.ActionAuditRead); err != nil {
 		return nil, err
 	}
-	if limit <= 0 {
-		limit = 50
+	if filter.Limit <= 0 {
+		filter.Limit = 50
 	}
-	if limit > 200 {
-		limit = 200
+	if filter.Limit > 200 {
+		filter.Limit = 200
 	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, occurred_at, actor_id, actor_kind, action, resource_type, resource_id,
 			outcome, request_id, changes FROM audit_events
-		ORDER BY occurred_at DESC, id DESC LIMIT $1 OFFSET $2`, limit, max(offset, 0))
+		WHERE ($1::bigint IS NULL OR actor_id=$1)
+		  AND ($2='' OR action=$2)
+		  AND ($3='' OR resource_type=$3)
+		  AND ($4='' OR outcome=$4)
+		  AND ($5::timestamptz IS NULL OR occurred_at >= $5)
+		  AND ($6::timestamptz IS NULL OR occurred_at <= $6)
+		ORDER BY occurred_at DESC, id DESC LIMIT $7 OFFSET $8`, filter.ActorID,
+		filter.Action, filter.Resource, filter.Outcome, filter.OccurredFrom, filter.OccurredTo,
+		filter.Limit, max(filter.Offset, 0))
 	if err != nil {
 		return nil, fmt.Errorf("list audit events: %w", err)
 	}

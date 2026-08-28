@@ -70,6 +70,10 @@ export const en = {
   scopes: 'Scopes',
   outcome: 'Outcome',
   resource: 'Resource',
+  actor: 'Actor',
+  from: 'From',
+  to: 'To',
+  applyFilters: 'Apply filters',
   occurredAt: 'Occurred at',
   noRows: 'Nothing to show',
   redactedOperations:
@@ -176,6 +180,10 @@ export const ptBR: Record<keyof typeof en, string> = {
   scopes: 'Escopos',
   outcome: 'Resultado',
   resource: 'Recurso',
+  actor: 'Ator',
+  from: 'De',
+  to: 'Até',
+  applyFilters: 'Aplicar filtros',
   occurredAt: 'Ocorrido em',
   noRows: 'Nada para mostrar',
   redactedOperations:

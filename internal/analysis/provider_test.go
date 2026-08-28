@@ -12,7 +12,20 @@ func validProvider() ProviderConfig {
 		MaxConcurrency: 1, CostCurrency: "USD", InputCost: 1, OutputCost: 2, Enabled: true, Revision: 1}
 }
 
-func TestUT205ProviderConfigurationValidatesBeforeActivation(t *testing.T) {
+func TestUT204UnsupportedCapabilityAndMalformedProviderConfig(t *testing.T) {
+	config := validProvider()
+	config.Capabilities = []string{"arbitrary_http"}
+	if !errors.Is(config.Validate(), ErrInvalidProviderConfig) {
+		t.Fatal("unsupported provider capability was accepted")
+	}
+	config = validProvider()
+	config.Provider = ""
+	if !errors.Is(config.Validate(), ErrInvalidProviderConfig) {
+		t.Fatal("malformed provider configuration was accepted")
+	}
+}
+
+func TestUT209ProviderConfigurationValidatesBeforeActivation(t *testing.T) {
 	manager, err := NewProviderManager(nil)
 	if err != nil {
 		t.Fatal(err)
@@ -27,7 +40,7 @@ func TestUT205ProviderConfigurationValidatesBeforeActivation(t *testing.T) {
 	}
 }
 
-func TestUT206NoProviderIsValidDegradedStartup(t *testing.T) {
+func TestUT205NoProviderIsValidDegradedStartup(t *testing.T) {
 	manager, err := NewProviderManager(nil)
 	if err != nil {
 		t.Fatal(err)
@@ -41,7 +54,7 @@ func TestUT206NoProviderIsValidDegradedStartup(t *testing.T) {
 	}
 }
 
-func TestUT207ProviderConfigurationIsFrozenPerRun(t *testing.T) {
+func TestUT208ProviderConfigurationIsFrozenPerAttributableRun(t *testing.T) {
 	manager, _ := NewProviderManager(ptr(validProvider()))
 	snapshot, release, err := manager.Acquire(context.Background())
 	if err != nil {
@@ -59,7 +72,7 @@ func TestUT207ProviderConfigurationIsFrozenPerRun(t *testing.T) {
 	release(UsageRecord{})
 }
 
-func TestUT208ConcurrencyQuotaDoesNotRetryStorm(t *testing.T) {
+func TestUT206ConcurrencyQuotaDoesNotRetryStorm(t *testing.T) {
 	manager, _ := NewProviderManager(ptr(validProvider()))
 	_, release, _ := manager.Acquire(context.Background())
 	for index := 0; index < 100; index++ {
@@ -70,7 +83,7 @@ func TestUT208ConcurrencyQuotaDoesNotRetryStorm(t *testing.T) {
 	release(UsageRecord{})
 }
 
-func TestUT209UsageCostAndHealthAreAggregateAndRedacted(t *testing.T) {
+func TestUT207UsageCostAndHealthAreAggregateAndRedacted(t *testing.T) {
 	manager, _ := NewProviderManager(ptr(validProvider()))
 	_, release, _ := manager.Acquire(context.Background())
 	release(UsageRecord{InputTokens: 1_000_000, OutputTokens: 500_000})
@@ -99,6 +112,37 @@ func TestUT210DisabledProviderAndInterruptedRunRemainTerminal(t *testing.T) {
 	}
 	if cancelled.State != StateCancelled || cancelled.FinishedAt == nil {
 		t.Fatalf("run = %#v", cancelled)
+	}
+}
+
+func TestIT088ActiveRunKeepsOriginalProviderIdentity(t *testing.T) {
+	manager, _ := NewProviderManager(ptr(validProvider()))
+	snapshot, release, _ := manager.Acquire(context.Background())
+	next := validProvider()
+	next.Model, next.Revision = "replacement", 2
+	if err := manager.Activate(next); err != nil {
+		t.Fatal(err)
+	}
+	release(UsageRecord{})
+	if snapshot.Model != "gemini" || snapshot.Revision != 1 {
+		t.Fatalf("run identity changed = %#v", snapshot)
+	}
+}
+
+func TestIT089InterruptedRunsBecomeTerminal(t *testing.T) {
+	now := time.Now().UTC()
+	run, err := FinishInterrupted(Run{State: StateRunning, StartedAt: &now}, now.Add(time.Second))
+	if err != nil || run.State != StateCancelled || run.FinishedAt == nil {
+		t.Fatalf("interrupted run = %#v, %v", run, err)
+	}
+}
+
+func TestIT090GlobalModelConcurrencyRejectsOverflowImmediately(t *testing.T) {
+	manager, _ := NewProviderManager(ptr(validProvider()))
+	_, release, _ := manager.Acquire(context.Background())
+	defer release(UsageRecord{})
+	if _, _, err := manager.Acquire(context.Background()); !errors.Is(err, ErrProviderQuota) {
+		t.Fatalf("overflow acquire = %v", err)
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"sort"
 	"strings"
@@ -28,6 +29,7 @@ var (
 	ErrBusy           = errors.New("export capacity exhausted")
 	ErrNotReady       = errors.New("export artifact is not ready")
 	ErrExpired        = errors.New("export artifact expired")
+	ErrIdempotencyKey = errors.New("export idempotency key reused")
 )
 
 const DefaultMaxBytes int64 = 64 << 20
@@ -43,9 +45,20 @@ type Request struct {
 	Cutoff     time.Time         `json:"cutoff"`
 }
 
+// Normalize returns the canonical request identity used for idempotency and
+// artifact metadata. Caller-owned slices and maps are never mutated.
+func (request Request) Normalize() Request {
+	request.ProjectIDs = slices.Clone(request.ProjectIDs)
+	slices.Sort(request.ProjectIDs)
+	request.Filters = maps.Clone(request.Filters)
+	return request
+}
+
 func (request Request) Validate() error {
+	validResource := request.Resource == "metrics" || request.Resource == "snapshots" ||
+		request.Resource == "comparisons"
 	if len(request.ProjectIDs) == 0 || len(request.ProjectIDs) > 100 ||
-		request.Resource == "" || request.Format != CSV && request.Format != EvidenceJSON ||
+		!validResource || request.Format != CSV && request.Format != EvidenceJSON ||
 		request.Locale != "en" && request.Locale != "pt-BR" || request.WindowFrom.IsZero() ||
 		request.WindowTo.IsZero() || request.Cutoff.IsZero() || request.WindowFrom.After(request.WindowTo) ||
 		request.WindowTo.After(request.Cutoff) {
@@ -123,6 +136,7 @@ func NewGenerator(maxBytes int64) Generator {
 }
 
 func (generator Generator) Generate(ctx context.Context, request Request, records []Record) (Generated, error) {
+	request = request.Normalize()
 	if err := request.Validate(); err != nil {
 		return Generated{}, err
 	}

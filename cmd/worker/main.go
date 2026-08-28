@@ -17,6 +17,7 @@ import (
 	"github.com/leohteixeira/opensource-project-intelligence/internal/collector"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/config"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/database"
+	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/exportstore"
 	gh "github.com/leohteixeira/opensource-project-intelligence/internal/platform/github"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/id"
 	"github.com/leohteixeira/opensource-project-intelligence/internal/platform/ingestion"
@@ -98,6 +99,20 @@ func run(logger *slog.Logger) error {
 	if err := runner.UseIntelligence(intelligencestore.New(pool, ids)); err != nil {
 		return err
 	}
+	if cfg.ObjectStorageEnabled {
+		blobs, err := objectstore.NewS3(objectstore.Config{Endpoint: cfg.S3Endpoint,
+			Bucket: cfg.S3Bucket, AccessKey: cfg.S3AccessKey, SecretKey: cfg.S3SecretKey})
+		if err != nil {
+			return err
+		}
+		exports, err := exportstore.New(pool, ids, blobs, cfg.ExportConcurrency)
+		if err != nil {
+			return err
+		}
+		if err := runner.UseExports(exports); err != nil {
+			return err
+		}
+	}
 	var relay *outbox.Relay
 	var publisher *jetstream.Publisher
 	var acceleration *valkey.Client
@@ -157,8 +172,11 @@ func loop(
 	for {
 		if err := tick(ctx, logger, cfg, pool, runner, relay, consumer, acceleration); err != nil {
 			// A failed cycle must not stop the worker: the scheduler retries on
-			// the next tick, and every task is idempotent.
-			logger.Warn("the collection cycle failed", slog.Any("error", err))
+			// the next tick, and every task is idempotent. Cancellation is the
+			// expected graceful-shutdown signal, not an operational failure.
+			if ctx.Err() == nil {
+				logger.Warn("the collection cycle failed", slog.Any("error", err))
+			}
 		}
 
 		select {

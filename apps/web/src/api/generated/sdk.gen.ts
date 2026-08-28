@@ -1413,18 +1413,16 @@ export const postApiV1AssistantProposalsProposalIdConfirmation = <
   });
 
 export const postApiV1Exports = <ThrowOnError extends boolean = false>(
-  options?: Options<PostApiV1ExportsData, ThrowOnError>,
+  options: Options<PostApiV1ExportsData, ThrowOnError>,
 ): RequestResult<PostApiV1ExportsResponses, PostApiV1ExportsErrors, ThrowOnError> =>
-  (options?.client ?? client).post<PostApiV1ExportsResponses, PostApiV1ExportsErrors, ThrowOnError>(
-    {
-      url: '/api/v1/exports',
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+  (options.client ?? client).post<PostApiV1ExportsResponses, PostApiV1ExportsErrors, ThrowOnError>({
+    url: '/api/v1/exports',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
     },
-  );
+  });
 
 export const getApiV1ExportsExportId = <ThrowOnError extends boolean = false>(
   options: Options<GetApiV1ExportsExportIdData, ThrowOnError>,

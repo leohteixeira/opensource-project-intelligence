@@ -1,8 +1,8 @@
-0d88d8a5f560c5b7e103adffc5644d84c63c65d92815cae02fdf98e1e4981cfa  api/openapi.yaml
+ae8c87abaf490ac333dcdfbfd1d98f8f1f3668808d20c37d772d5d5334819f28  api/openapi.yaml
 261e8cf9c6add9d2ff619f9e78ade3777b0c5b6b4054413fd022d09d313de646  sqlc.yaml
 02fc0d3d351d58d0d41fe800fb24cc3ea2aee5ee905366456c29d358fb1bee59  migrations/0001_platform.up.sql
 0f6983396f64452615e5a74c5fe8a066e83fc7d462c87eee613c70656183dc34  internal/platform/database/query/platform.sql
-c2f4bd0c492709bd0860365e644a490b37203e2823cb3d3f81bf0061225e1f02  internal/platform/httpapi/openapi.gen.go
+0975de35ea4ec64232a4435ffd87cde94eedb82617e519bb2244144c278c6769  internal/platform/httpapi/openapi.gen.go
 84f598c6b75bfcb2abf4c6fbe856276271ccb1899028c767b01f05ad1f13cd87  internal/platform/database/sqlc/db.go
 eca64ba4a5000637f01422be348dfb1bcf3ebe8b47bd7d890615faab8a795766  internal/platform/database/sqlc/models.go
 0c5d56d07e41404f907270e7c6d94965818c901edef4c4ad3238d1d23a233a31  internal/platform/database/sqlc/platform.sql.go
@@ -21,5 +21,5 @@ df993567abbe3e5b477d81517fb967cf63cf40b7866957d5dc6cc03238cb1426  apps/web/src/a
 2bfa0ff7c4a4c9694e36c55c1c11ffd839d7f1f5b04490733a5343b9245361a8  apps/web/src/api/generated/core/types.gen.ts
 1b637c521d8136dfdbf8dfc4fcc8bb73e0c554466e4d2ca9c9086d4c712983c4  apps/web/src/api/generated/core/utils.gen.ts
 9bd8a03cbcf7f93769dabd99cd7ec2c8166b3d90fe8a442d332fd030b0b960e4  apps/web/src/api/generated/index.ts
-d6800731f903b98e31944d527ac3e1f4ade147e50cfea7bcde2c7d1750a3bf14  apps/web/src/api/generated/sdk.gen.ts
-a8cfb16802c5f9f4179829efc42ce68a2fbcb4e7eaa702a3f80feef9838f813b  apps/web/src/api/generated/types.gen.ts
+e169b1be197f6f87490b6763416487dbeaf70dc5f09e315c6f5b2c791e1e9bd2  apps/web/src/api/generated/sdk.gen.ts
+67be9f87809a876a262d192d4c6a62aa52ff5d389ec3845c1e68650c1219649a  apps/web/src/api/generated/types.gen.ts

@@ -83,11 +83,31 @@ func (s *Store) Create(
 	if err := access.Authorize(principal, access.ActionExportWrite); err != nil {
 		return Export{}, err
 	}
+	request = request.Normalize()
 	if err := request.Validate(); err != nil {
 		return Export{}, err
 	}
+	requestID = strings.TrimSpace(requestID)
+	if requestID == "" || len(requestID) > 255 {
+		return Export{}, exportartifact.ErrInvalidRequest
+	}
 	if err := s.authorizeProjects(ctx, principal.Workspace, request.ProjectIDs); err != nil {
 		return Export{}, err
+	}
+	encodedRequest, _ := json.Marshal(request)
+	var existingID int64
+	var existingRequest []byte
+	err := s.pool.QueryRow(ctx, `SELECT id,request FROM export_requests
+		WHERE workspace_id=$1 AND actor_id=$2 AND request_id=$3`, principal.Workspace,
+		principal.ActorID, requestID).Scan(&existingID, &existingRequest)
+	if err == nil {
+		if string(existingRequest) != string(encodedRequest) {
+			return Export{}, exportartifact.ErrIdempotencyKey
+		}
+		return s.load(ctx, existingID, principal.Workspace, principal.ActorID)
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return Export{}, fmt.Errorf("read export idempotency: %w", err)
 	}
 	exportID, err := s.ids.Next(ctx)
 	if err != nil {
@@ -102,7 +122,6 @@ func (s *Store) Create(
 	if err != nil {
 		return Export{}, err
 	}
-	encodedRequest, _ := json.Marshal(request)
 	encodedJob, _ := json.Marshal(value)
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -124,6 +143,12 @@ func (s *Store) Create(
 	if err != nil {
 		return Export{}, fmt.Errorf("insert export request: %w", err)
 	}
+	for _, projectID := range request.ProjectIDs {
+		if _, err = tx.Exec(ctx, `INSERT INTO export_request_projects (export_id,project_id)
+			VALUES ($1,$2)`, exportID, projectID); err != nil {
+			return Export{}, fmt.Errorf("record export project ownership: %w", err)
+		}
+	}
 	eventID, err := s.ids.Next(ctx)
 	if err != nil {
 		return Export{}, fmt.Errorf("issue export Job event ID: %w", err)
@@ -143,7 +168,7 @@ func (s *Store) Get(ctx context.Context, principal access.Principal, id int64) (
 	if err := access.Authorize(principal, access.ActionIntelligenceRead); err != nil {
 		return Export{}, err
 	}
-	value, err := s.load(ctx, id, principal.Workspace)
+	value, err := s.load(ctx, id, principal.Workspace, principal.ActorID)
 	if err != nil {
 		return Export{}, err
 	}
@@ -294,7 +319,7 @@ func (s *Store) authorizeProjects(ctx context.Context, workspaceID int64, ids []
 	return nil
 }
 
-func (s *Store) load(ctx context.Context, id, workspaceID int64) (Export, error) {
+func (s *Store) load(ctx context.Context, id, workspaceID, actorID int64) (Export, error) {
 	var value Export
 	var encoded, digest []byte
 	var jobState string
@@ -303,7 +328,8 @@ func (s *Store) load(ctx context.Context, id, workspaceID int64) (Export, error)
 		COALESCE(o.object_key,''),e.failure_code,e.created_at,e.completed_at,e.expires_at,e.workspace_id,e.actor_id
 		FROM export_requests e JOIN jobs j ON j.id=e.job_id
 		LEFT JOIN object_references o ON o.id=e.object_reference_id
-		WHERE e.id=$1 AND e.workspace_id=$2`, id, workspaceID).Scan(&value.ID, &value.JobID,
+		WHERE e.id=$1 AND e.workspace_id=$2 AND e.actor_id=$3`, id, workspaceID, actorID).Scan(
+		&value.ID, &value.JobID,
 		&value.State, &jobState, &encoded, &value.Rows, &value.MediaType, &digest, &value.SizeBytes,
 		&value.objectKey, &value.Failure, &value.CreatedAt, &value.CompletedAt, &value.ExpiresAt,
 		&value.workspaceID, &value.actorID)

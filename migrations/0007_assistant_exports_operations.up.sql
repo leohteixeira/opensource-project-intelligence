@@ -48,9 +48,20 @@ CREATE TABLE export_requests (
 
 CREATE INDEX export_requests_owner_idx
     ON export_requests (workspace_id, actor_id, created_at DESC, id DESC);
+CREATE UNIQUE INDEX export_requests_idempotency_idx
+    ON export_requests (workspace_id, actor_id, request_id);
 CREATE INDEX export_requests_expiry_idx
     ON export_requests (expires_at, id)
     WHERE state = 'succeeded';
+
+CREATE TABLE export_request_projects (
+    export_id bigint NOT NULL REFERENCES export_requests (id) ON DELETE CASCADE,
+    project_id bigint NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
+    PRIMARY KEY (export_id, project_id)
+);
+
+CREATE INDEX export_request_projects_project_idx
+    ON export_request_projects (project_id, export_id);
 
 CREATE TABLE model_usage_events (
     id bigint PRIMARY KEY CHECK (id > 0),

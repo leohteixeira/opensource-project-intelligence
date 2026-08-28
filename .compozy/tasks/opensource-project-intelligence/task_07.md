@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Add bounded ADK/HITL, exports, and final operational hardening
 type: fullstack
 complexity: critical
@@ -53,18 +53,18 @@ closure, and full-system verification of the one-delivery product vision.
 
 ## Subtasks
 
-- [ ] Implement bounded ADK run orchestration, typed evidence tools, clarification, durable pause/
+- [x] Implement bounded ADK run orchestration, typed evidence tools, clarification, durable pause/
       resume, budgets, proposal persistence, and strict allowlists.
-- [ ] Implement assistant proposal/confirmation execution with single-use expiry, idempotency,
+- [x] Implement assistant proposal/confirmation execution with single-use expiry, idempotency,
       current authorization/version checks, safe refusal, audit attribution, and recovery.
-- [ ] Implement export specification, authorization, snapshot cutoff, CSV/evidence JSON generation,
+- [x] Implement export specification, authorization, snapshot cutoff, CSV/evidence JSON generation,
       Job lifecycle, object checksum, download, expiry, and purge ownership.
-- [ ] Complete model provider configuration/status, aggregate usage/cost, quota degradation, and
+- [x] Complete model provider configuration/status, aggregate usage/cost, quota degradation, and
       deterministic-feature isolation.
-- [ ] Complete audit searches/exports, telemetry correlation, retention/purge reconciliation,
+- [x] Complete audit searches/exports, telemetry correlation, retention/purge reconciliation,
       backup/restore, readiness, graceful shutdown, race, security, evaluation, and operational docs.
-- [ ] Replace S19 and S22 fixtures with generated-client data and every required responsive state.
-- [ ] Run the full unit, integration, race, generated-contract, Playwright/axe, lint, typecheck,
+- [x] Replace S19 and S22 fixtures with generated-client data and every required responsive state.
+- [x] Run the full unit, integration, race, generated-contract, Playwright/axe, lint, typecheck,
       build, Compose, backup/restore, and pre-commit verification matrix.
 
 ## Implementation Details
@@ -115,12 +115,12 @@ Implement these normative cases from \_tests.md exactly once:
 
 ## Success Criteria
 
-- [ ] Agentic execution cannot escape typed allowlisted application capabilities or bypass approval.
-- [ ] Confirmation is action-bound, single-use, expiring, idempotent, and revalidated against current
+- [x] Agentic execution cannot escape typed allowlisted application capabilities or bypass approval.
+- [x] Confirmation is action-bound, single-use, expiring, idempotent, and revalidated against current
       identity, scope, resource version, lifecycle, and quota.
-- [ ] Exports are authorized at one cutoff, checksummed, reproducible, localized where appropriate,
+- [x] Exports are authorized at one cutoff, checksummed, reproducible, localized where appropriate,
       purged with owners, and inaccessible after 24 hours.
-- [ ] Provider/model failure never blocks deterministic collection or intelligence.
-- [ ] Every explicit test and repository verification command passes from a clean supported
+- [x] Provider/model failure never blocks deterministic collection or intelligence.
+- [x] Every explicit test and repository verification command passes from a clean supported
       environment, including race, Playwright/axe, generated drift, and backup/restore.
-- [ ] All 57 assigned tests pass with fresh evidence.
+- [x] All 57 assigned tests pass with fresh evidence.

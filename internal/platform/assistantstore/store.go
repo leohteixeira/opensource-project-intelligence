@@ -78,7 +78,7 @@ func (s *Store) Create(
 		proposal.WorkspaceID, proposal.ActorID, proposalRoute, idempotencyKey).Scan(&storedDigest, &resourceID)
 	if err == nil {
 		if len(storedDigest) != len(digest) || subtle.ConstantTimeCompare(storedDigest, digest[:]) != 1 || resourceID == nil {
-			return agent.Proposal{}, false, agent.ErrInvalid
+			return agent.Proposal{}, false, agent.ErrIdempotencyKey
 		}
 		value, loadErr := scanProposal(tx.QueryRow(ctx, proposalSelect+` WHERE id=$1`, *resourceID))
 		if loadErr != nil {
