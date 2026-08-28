@@ -27,7 +27,9 @@ export type RouteKey =
   | 'serviceAccounts'
   | 'audit'
   | 'operations'
-  | 'policies';
+  | 'policies'
+  | 'assistant'
+  | 'exports';
 
 const segments: Record<Locale, Record<RouteKey, string>> = {
   en: {
@@ -58,6 +60,8 @@ const segments: Record<Locale, Record<RouteKey, string>> = {
     audit: 'admin/audit',
     operations: 'admin/operations',
     policies: 'admin/policies',
+    assistant: 'assistant',
+    exports: 'exports',
   },
   'pt-BR': {
     catalog: 'catalogo',
@@ -87,6 +91,8 @@ const segments: Record<Locale, Record<RouteKey, string>> = {
     audit: 'admin/auditoria',
     operations: 'admin/operacoes',
     policies: 'admin/politicas',
+    assistant: 'assistente',
+    exports: 'exportacoes',
   },
 };
 
