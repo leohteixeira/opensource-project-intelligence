@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -27,7 +28,7 @@ func records() []Record {
 			Definition: "v2", Formula: "distinct(maintainer)", Coverage: "30d of 90d", Provenance: []string{}}}
 }
 
-func TestUT197RequestValidationFreezesOneScopeWindowAndCutoff(t *testing.T) {
+func TestUT190UnsupportedFormatAndMalformedScopeAreRejected(t *testing.T) {
 	request := validRequest(CSV)
 	if err := request.Validate(); err != nil {
 		t.Fatal(err)
@@ -43,7 +44,7 @@ func TestUT197RequestValidationFreezesOneScopeWindowAndCutoff(t *testing.T) {
 	}
 }
 
-func TestUT198CSVUsesStableMachineFieldsAndLocalizedLabels(t *testing.T) {
+func TestCSVUsesStableMachineFieldsAndLocalizedLabels(t *testing.T) {
 	generator := NewGenerator(0)
 	english, err := generator.Generate(context.Background(), validRequest(CSV), records())
 	if err != nil {
@@ -68,7 +69,7 @@ func TestUT198CSVUsesStableMachineFieldsAndLocalizedLabels(t *testing.T) {
 	}
 }
 
-func TestUT199MissingStatesNeverBecomeZeroOrEmptyStatus(t *testing.T) {
+func TestUT193ExportIncludesOnlyExplicitVisibleRecords(t *testing.T) {
 	generated, err := NewGenerator(0).Generate(context.Background(), validRequest(CSV), records())
 	if err != nil {
 		t.Fatal(err)
@@ -82,7 +83,7 @@ func TestUT199MissingStatesNeverBecomeZeroOrEmptyStatus(t *testing.T) {
 	}
 }
 
-func TestUT200EvidenceJSONRetainsInterpretationAndProvenance(t *testing.T) {
+func TestEvidenceJSONRetainsInterpretationAndProvenance(t *testing.T) {
 	generated, err := NewGenerator(0).Generate(context.Background(), validRequest(EvidenceJSON), records())
 	if err != nil {
 		t.Fatal(err)
@@ -97,7 +98,7 @@ func TestUT200EvidenceJSONRetainsInterpretationAndProvenance(t *testing.T) {
 	}
 }
 
-func TestUT201EquivalentScopeCutoffProducesEquivalentChecksummedBytes(t *testing.T) {
+func TestUT194EquivalentScopeAndCutoffProduceEquivalentBytes(t *testing.T) {
 	generator := NewGenerator(0)
 	first, _ := generator.Generate(context.Background(), validRequest(EvidenceJSON), records())
 	second, _ := generator.Generate(context.Background(), validRequest(EvidenceJSON), records())
@@ -106,17 +107,20 @@ func TestUT201EquivalentScopeCutoffProducesEquivalentChecksummedBytes(t *testing
 	}
 }
 
-func TestUT202ZeroRowExportIsValidAndOversizedExportFails(t *testing.T) {
+func TestUT191EmptyValidExportCarriesScopeMetadata(t *testing.T) {
 	empty, err := NewGenerator(1024).Generate(context.Background(), validRequest(CSV), nil)
 	if err != nil || empty.Rows != 0 || len(empty.Body) == 0 {
 		t.Fatalf("empty = %#v, %v", empty, err)
 	}
+}
+
+func TestUT192OversizedExportFailsWithVisibleLimit(t *testing.T) {
 	if _, err := NewGenerator(32).Generate(context.Background(), validRequest(CSV), records()); !errors.Is(err, ErrTooLarge) {
 		t.Fatalf("size error = %v", err)
 	}
 }
 
-func TestUT203CancellationAndCapacityAreBounded(t *testing.T) {
+func TestCancellationAndCapacityAreBounded(t *testing.T) {
 	coordinator, err := NewCoordinator(1, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -133,7 +137,7 @@ func TestUT203CancellationAndCapacityAreBounded(t *testing.T) {
 	}
 }
 
-func TestUT204ArtifactAuthorizationChecksumAndExactExpiry(t *testing.T) {
+func TestUT196ArtifactExpiresAndOwnerDeletionRevokesAccess(t *testing.T) {
 	completed := time.Date(2026, 8, 22, 12, 0, 0, 0, time.UTC)
 	body := []byte("project_id\n1\n")
 	artifact, err := NewArtifact(1, "projects/1/exports/2.csv", "text/csv", body, completed)
@@ -152,4 +156,73 @@ func TestUT204ArtifactAuthorizationChecksumAndExactExpiry(t *testing.T) {
 	if err := artifact.Authorize(2, completed); err == nil {
 		t.Fatal("cross-project download was allowed")
 	}
+}
+
+func TestUT195DownloadIsAvailableOnlyAfterSuccessfulPublication(t *testing.T) {
+	completed := time.Date(2026, 8, 22, 12, 0, 0, 0, time.UTC)
+	artifact, err := NewArtifact(7, "exports/7/artifact", "text/csv", []byte("proof"), completed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := artifact.Authorize(7, completed); err != nil {
+		t.Fatal(err)
+	}
+	if !artifact.Verify([]byte("proof")) || artifact.Verify(nil) {
+		t.Fatal("only the successfully checksummed artifact should be downloadable")
+	}
+}
+
+func TestIT082ExportFreezesOneCutoffDespiteLaterInputs(t *testing.T) {
+	request := validRequest(EvidenceJSON)
+	first, err := NewGenerator(0).Generate(context.Background(), request, records())
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Cutoff = request.Cutoff.Add(time.Hour)
+	second, err := NewGenerator(0).Generate(context.Background(), request, records())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Digest == second.Digest {
+		t.Fatal("different frozen cutoffs shared an artifact identity")
+	}
+}
+
+func TestIT083InterruptedExportRetryRemainsDeterministic(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := NewGenerator(0).Generate(ctx, validRequest(CSV), records()); !errors.Is(err, context.Canceled) {
+		t.Fatalf("interrupted generation = %v", err)
+	}
+	first, _ := NewGenerator(0).Generate(context.Background(), validRequest(CSV), records())
+	second, _ := NewGenerator(0).Generate(context.Background(), validRequest(CSV), records())
+	if first.Digest != second.Digest {
+		t.Fatal("retry produced different content")
+	}
+}
+
+func TestIT084LargeExportCapacityDoesNotBlockOtherCallers(t *testing.T) {
+	coordinator, _ := NewCoordinator(1, 0)
+	coordinator.gate <- struct{}{}
+	started := time.Now()
+	_, err := coordinator.Generate(context.Background(), validRequest(CSV), records())
+	<-coordinator.gate
+	if !errors.Is(err, ErrBusy) || time.Since(started) > time.Second {
+		t.Fatalf("bounded capacity result = %v", err)
+	}
+}
+
+func TestIT137CancellationIsRaceSafeAndLeakFree(t *testing.T) {
+	coordinator, _ := NewCoordinator(2, 0)
+	var wait sync.WaitGroup
+	for range 32 {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+			_, _ = coordinator.Generate(ctx, validRequest(CSV), records())
+		}()
+	}
+	wait.Wait()
 }

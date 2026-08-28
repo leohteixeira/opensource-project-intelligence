@@ -71,7 +71,7 @@ func serviceFixture(t *testing.T) (*Service, *fakeState, *fakeExecutor) {
 	return service, state, executor
 }
 
-func TestUT169TypedRepositoryProposalContainsExactPreview(t *testing.T) {
+func TestTypedRepositoryProposalContainsExactPreview(t *testing.T) {
 	service, _, _ := serviceFixture(t)
 	proposal, err := service.Propose(context.Background(), validPrincipal(), "Add the SDK repository", "create-1")
 	if err != nil {
@@ -83,7 +83,7 @@ func TestUT169TypedRepositoryProposalContainsExactPreview(t *testing.T) {
 	}
 }
 
-func TestUT170RejectsUntypedUnknownAndMultipleActions(t *testing.T) {
+func TestUT169RejectsUntypedUnsupportedProposalFields(t *testing.T) {
 	for _, change := range []func(*Draft){
 		func(d *Draft) { d.Action = "credentials.rotate" },
 		func(d *Draft) { d.Unrecognized = []string{"raw_sql"} },
@@ -97,20 +97,23 @@ func TestUT170RejectsUntypedUnknownAndMultipleActions(t *testing.T) {
 	}
 }
 
-func TestUT171RejectsMissingInputsAndInvalidQuota(t *testing.T) {
+func TestUT170MissingRequiredValueRequiresClarification(t *testing.T) {
 	draft := validDraft()
 	draft.Repository.URL = ""
 	if !errors.Is(draft.Validate(), ErrInvalid) {
 		t.Fatal("missing URL was accepted")
 	}
-	draft = validDraft()
+}
+
+func TestUT171QuotaLimitedProposalCannotBeApproved(t *testing.T) {
+	draft := validDraft()
 	draft.QuotaUsed = draft.QuotaLimit
 	if !errors.Is(draft.Validate(), ErrQuotaExceeded) {
 		t.Fatal("exhausted quota was accepted")
 	}
 }
 
-func TestUT172ConfirmationIsActorBoundAndTokenBound(t *testing.T) {
+func TestConfirmationIsActorBoundAndTokenBound(t *testing.T) {
 	service, _, executor := serviceFixture(t)
 	proposal, _ := service.Propose(context.Background(), validPrincipal(), "Add", "create-1")
 	other := validPrincipal()
@@ -126,7 +129,7 @@ func TestUT172ConfirmationIsActorBoundAndTokenBound(t *testing.T) {
 	}
 }
 
-func TestUT173ConfirmationRechecksIdentityScopeStateVersionAndQuota(t *testing.T) {
+func TestUT172ApprovalRechecksCurrentRoleScopeAndResource(t *testing.T) {
 	cases := []struct {
 		name   string
 		mutate func(*access.Principal, *fakeState)
@@ -152,7 +155,7 @@ func TestUT173ConfirmationRechecksIdentityScopeStateVersionAndQuota(t *testing.T
 	}
 }
 
-func TestUT174ExpiryAndReplayExecuteNothingTwice(t *testing.T) {
+func TestUT174ApprovalBeforePreviewOrAfterExpiryIsRejected(t *testing.T) {
 	service, _, executor := serviceFixture(t)
 	proposal, _ := service.Propose(context.Background(), validPrincipal(), "Add", "create-1")
 	service.now = func() time.Time { return proposal.ExpiresAt }
@@ -164,7 +167,7 @@ func TestUT174ExpiryAndReplayExecuteNothingTwice(t *testing.T) {
 	}
 }
 
-func TestUT175SuccessfulConfirmationIsSingleUseAndIdempotent(t *testing.T) {
+func TestUT173ReplayedConfirmationCannotRepeatMutation(t *testing.T) {
 	service, _, executor := serviceFixture(t)
 	proposal, _ := service.Propose(context.Background(), validPrincipal(), "Add", "create-1")
 	first, err := service.Confirm(context.Background(), validPrincipal(), proposal.ID, proposal.ConfirmationToken, "confirm-1")
@@ -183,7 +186,7 @@ func TestUT175SuccessfulConfirmationIsSingleUseAndIdempotent(t *testing.T) {
 	}
 }
 
-func TestUT190ViewerAdminOnlyAndServiceActorsCannotUseAssistant(t *testing.T) {
+func TestViewerAdminOnlyAndServiceActorsCannotUseAssistant(t *testing.T) {
 	roles := []access.Principal{
 		{ActorID: 1, Kind: access.ActorMember, Role: access.RoleViewer, Status: access.StatusActive, Workspace: 1},
 		{ActorID: 1, Kind: access.ActorServiceAccount, Role: access.RoleAnalyst, Status: access.StatusActive, Workspace: 1, Scopes: []string{"projects:read"}},
@@ -196,7 +199,7 @@ func TestUT190ViewerAdminOnlyAndServiceActorsCannotUseAssistant(t *testing.T) {
 	}
 }
 
-func TestUT191ProhibitedCategoriesNeverReachExecutor(t *testing.T) {
+func TestProhibitedCategoriesNeverReachExecutor(t *testing.T) {
 	for _, action := range []Action{"member.update", "credential.rotate", "policy.create", "project.archive", "project.delete"} {
 		draft := validDraft()
 		draft.Action = action
@@ -212,7 +215,7 @@ func TestUT191ProhibitedCategoriesNeverReachExecutor(t *testing.T) {
 	}
 }
 
-func TestUT192CreateIdempotencyCannotChangeRequest(t *testing.T) {
+func TestCreateIdempotencyCannotChangeRequest(t *testing.T) {
 	service, _, _ := serviceFixture(t)
 	if _, err := service.Propose(context.Background(), validPrincipal(), "Add A", "same"); err != nil {
 		t.Fatal(err)
@@ -222,7 +225,7 @@ func TestUT192CreateIdempotencyCannotChangeRequest(t *testing.T) {
 	}
 }
 
-func TestUT193PausedArchivedAndDeletedResourcesAreRejected(t *testing.T) {
+func TestUT175PausedArchivedAndDeletedProposalLifecycle(t *testing.T) {
 	for _, lifecycle := range []string{"paused", "archived", "deleting", "deleted"} {
 		service, state, _ := serviceFixture(t)
 		state.snapshot.Lifecycle = lifecycle
@@ -232,7 +235,7 @@ func TestUT193PausedArchivedAndDeletedResourcesAreRejected(t *testing.T) {
 	}
 }
 
-func TestUT194ExecutionFailureIsTerminalAndAuditable(t *testing.T) {
+func TestExecutionFailureIsTerminalAndAuditable(t *testing.T) {
 	service, _, executor := serviceFixture(t)
 	executor.err = errors.New("write failed")
 	proposal, _ := service.Propose(context.Background(), validPrincipal(), "Add", "create")
@@ -244,7 +247,7 @@ func TestUT194ExecutionFailureIsTerminalAndAuditable(t *testing.T) {
 	}
 }
 
-func TestUT195ConcurrentConfirmationsExecuteOnce(t *testing.T) {
+func TestConcurrentConfirmationsExecuteOnce(t *testing.T) {
 	service, _, executor := serviceFixture(t)
 	proposal, _ := service.Propose(context.Background(), validPrincipal(), "Add", "create")
 	var wait sync.WaitGroup
@@ -261,8 +264,77 @@ func TestUT195ConcurrentConfirmationsExecuteOnce(t *testing.T) {
 	}
 }
 
-func TestUT196ADKBoundaryHasOneNamedAllowlistedTool(t *testing.T) {
+func TestADKBoundaryHasOneNamedAllowlistedTool(t *testing.T) {
 	if proposalToolName != "propose_repository_add" {
 		t.Fatalf("tool name = %q", proposalToolName)
+	}
+}
+
+func TestIT073ChangedResourceInvalidatesProposalPreview(t *testing.T) {
+	service, state, executor := serviceFixture(t)
+	proposal, _ := service.Propose(context.Background(), validPrincipal(), "Add", "create")
+	state.snapshot.ProjectVersion++
+	if _, err := service.Confirm(context.Background(), validPrincipal(), proposal.ID,
+		proposal.ConfirmationToken, "confirm"); !errors.Is(err, ErrStateChanged) {
+		t.Fatalf("changed resource error = %v", err)
+	}
+	if executor.calls != 0 {
+		t.Fatal("changed preview executed")
+	}
+}
+
+func TestIT074ExpiredConfirmationExecutesNothing(t *testing.T) {
+	service, _, executor := serviceFixture(t)
+	proposal, _ := service.Propose(context.Background(), validPrincipal(), "Add", "create")
+	service.now = func() time.Time { return proposal.ExpiresAt }
+	_, _ = service.Confirm(context.Background(), validPrincipal(), proposal.ID,
+		proposal.ConfirmationToken, "confirm")
+	if executor.calls != 0 {
+		t.Fatal("expired proposal executed")
+	}
+}
+
+func TestIT075ManyActionsAreRejectedAtomically(t *testing.T) {
+	draft := validDraft()
+	draft.ActionCount = 2
+	state := &fakeState{snapshot: Snapshot{ProjectVersion: 5, Lifecycle: "active", QuotaLimit: 20}}
+	executor := &fakeExecutor{}
+	service, _ := New(fakePlanner{draft: draft}, state, executor, NewMemoryStore(), &fakeIDs{})
+	if _, err := service.Propose(context.Background(), validPrincipal(), "two actions", "create"); !errors.Is(err, ErrActionNotAllowed) {
+		t.Fatalf("multi-action error = %v", err)
+	}
+	if executor.calls != 0 {
+		t.Fatal("part of a rejected multi-action proposal executed")
+	}
+}
+
+func TestIT085SimultaneousConfirmationsHaveOneDeterministicReceipt(t *testing.T) {
+	service, _, executor := serviceFixture(t)
+	proposal, _ := service.Propose(context.Background(), validPrincipal(), "Add", "create")
+	var wait sync.WaitGroup
+	for range 8 {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			_, _ = service.Confirm(context.Background(), validPrincipal(), proposal.ID,
+				proposal.ConfirmationToken, "confirm")
+		}()
+	}
+	wait.Wait()
+	if executor.calls != 1 {
+		t.Fatalf("mutation count = %d", executor.calls)
+	}
+}
+
+func TestIT086FailedActionLeavesNoSuccessfulMutation(t *testing.T) {
+	service, _, executor := serviceFixture(t)
+	executor.err = errors.New("database unavailable")
+	proposal, _ := service.Propose(context.Background(), validPrincipal(), "Add", "create")
+	if _, err := service.Confirm(context.Background(), validPrincipal(), proposal.ID,
+		proposal.ConfirmationToken, "confirm"); err == nil {
+		t.Fatal("execution failure was hidden")
+	}
+	if executor.calls != 1 {
+		t.Fatalf("executor calls = %d", executor.calls)
 	}
 }

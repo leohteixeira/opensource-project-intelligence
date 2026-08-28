@@ -35,6 +35,11 @@ func TestLoadAppliesDefaults(t *testing.T) {
 	if cfg.ShutdownTimeout != 15*time.Second {
 		t.Errorf("ShutdownTimeout = %s, want 15s", cfg.ShutdownTimeout)
 	}
+	if cfg.AIConcurrency != 4 || cfg.ADKMaxSteps != 12 || cfg.ADKTimeout != 2*time.Minute ||
+		cfg.ADKMaxOutputBytes != 65536 || cfg.ADKMaxCostMicros != 100000 ||
+		cfg.ADKToolConcurrency != 1 || cfg.ExportConcurrency != 2 {
+		t.Errorf("bounded operation defaults = %#v", cfg)
+	}
 	if cfg.TelemetryEnabled() {
 		t.Error("TelemetryEnabled() = true, want false when no OTLP endpoint is configured")
 	}
@@ -170,6 +175,20 @@ func TestLoadRejectsInvalidValues(t *testing.T) {
 				"WORKER_CONCURRENCY": "0",
 			},
 			want: "WORKER_CONCURRENCY must be at least 1",
+		},
+		"unbounded agent timeout": {
+			env: map[string]string{
+				"DATABASE_URL": "postgres://user:password@localhost:5433/db",
+				"ADK_TIMEOUT":  "11m",
+			},
+			want: "ADK_TIMEOUT must not exceed 10m",
+		},
+		"unbounded agent steps": {
+			env: map[string]string{
+				"DATABASE_URL":  "postgres://user:password@localhost:5433/db",
+				"ADK_MAX_STEPS": "65",
+			},
+			want: "ADK_MAX_STEPS must be between 1 and 64",
 		},
 	}
 
