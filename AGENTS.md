@@ -1,6 +1,6 @@
 # Open Source Project Intelligence — agent instructions
 
-Repository-specific extension. Read `/workspace/CLAUDE.md` first; what is written here prevails
+Repository-specific extension. Read `/workspace/AGENTS.md` first; what is written here prevails
 only inside `repos/opensource-project-intelligence`.
 
 ## State
